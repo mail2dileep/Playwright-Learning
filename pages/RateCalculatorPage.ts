@@ -1,73 +1,72 @@
 import { Page, Locator } from '@playwright/test';
 
 export class RateCalculatorPage {
-  readonly page: Page;
+  private readonly page: Page;
   private readonly serviceTypeSelect: Locator;
-  private readonly electricMeterReadInput: Locator;
-  private readonly gasMeterReadInput: Locator;
+  private readonly electricMeterInput: Locator;
+  private readonly gasMeterInput: Locator;
   private readonly calculateButton: Locator;
-  private readonly calculatedPricePanel: Locator;
+  private readonly combinedPriceOutput: Locator;
 
   constructor(page: Page) {
     this.page = page;
-    this.serviceTypeSelect = page.locator('[data-testid="service-type"]');
-    this.electricMeterReadInput = page.locator('[data-testid="electric-meter-read"]');
-    this.gasMeterReadInput = page.locator('[data-testid="gas-meter-read"]');
-    this.calculateButton = page.locator('[data-testid="calculate-button"]');
-    this.calculatedPricePanel = page.locator('[data-testid="calculated-price"]');
+    this.serviceTypeSelect = this.page.getByTestId('service-type');
+    this.electricMeterInput = this.page.getByTestId('electric-meter');
+    this.gasMeterInput = this.page.getByTestId('gas-meter');
+    this.calculateButton = this.page.getByTestId('calculate-btn');
+    this.combinedPriceOutput = this.page.getByTestId('combined-price');
+  }
+
+  async goto(path: string = '/rate-calculator'): Promise<void> {
+    await this.page.goto(path);
+    await this.waitForReady();
   }
 
   async waitForReady(): Promise<void> {
     await this.serviceTypeSelect.waitFor({ state: 'visible' });
-    await this.calculateButton.waitFor({ state: 'attached' });
   }
 
   async selectServiceType(optionLabel: string): Promise<void> {
     await this.serviceTypeSelect.selectOption({ label: optionLabel });
   }
 
-  async enterElectricMeterRead(value: number | string): Promise<void> {
-    await this.electricMeterReadInput.fill(String(value));
+  async isElectricMeterEnabled(): Promise<boolean> {
+    return await this.electricMeterInput.isEnabled();
   }
 
-  async getElectricMeterReadValue(): Promise<string> {
-    return await this.electricMeterReadInput.inputValue();
+  async isGasMeterEnabled(): Promise<boolean> {
+    return await this.gasMeterInput.isEnabled();
   }
 
-  async isElectricMeterReadEnabled(): Promise<boolean> {
-    return await this.electricMeterReadInput.isEnabled();
+  async fillElectricMeter(value: number | string): Promise<void> {
+    await this.electricMeterInput.fill('');
+    await this.electricMeterInput.fill(String(value));
   }
 
-  async isGasMeterReadEnabled(): Promise<boolean> {
-    try {
-      return await this.gasMeterReadInput.isEnabled();
-    } catch {
-      return false;
-    }
+  async fillGasMeter(value: number | string): Promise<void> {
+    await this.gasMeterInput.fill('');
+    await this.gasMeterInput.fill(String(value));
   }
 
-  async isGasMeterReadVisible(): Promise<boolean> {
-    try {
-      return await this.gasMeterReadInput.isVisible();
-    } catch {
-      return false;
-    }
+  async getElectricMeterValue(): Promise<string> {
+    return await this.electricMeterInput.inputValue();
+  }
+
+  async getGasMeterValue(): Promise<string> {
+    return await this.gasMeterInput.inputValue();
   }
 
   async clickCalculate(): Promise<void> {
     await this.calculateButton.click();
   }
 
-  async isCalculatedPriceVisible(): Promise<boolean> {
-    try {
-      return await this.calculatedPricePanel.isVisible();
-    } catch {
-      return false;
-    }
+  async isCombinedPriceVisible(): Promise<boolean> {
+    return await this.combinedPriceOutput.isVisible();
   }
 
-  async getCalculatedPriceText(): Promise<string> {
-    const text = await this.calculatedPricePanel.textContent();
+  async getCombinedPriceText(): Promise<string> {
+    await this.combinedPriceOutput.waitFor({ state: 'visible' });
+    const text = await this.combinedPriceOutput.textContent();
     return (text ?? '').trim();
   }
 }
