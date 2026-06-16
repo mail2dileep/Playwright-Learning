@@ -1,72 +1,73 @@
 import { Page, Locator } from '@playwright/test';
 
 export class RateCalculatorPage {
-  private readonly page: Page;
-  private readonly serviceTypeSelect: Locator;
-  private readonly electricMeterInput: Locator;
-  private readonly gasMeterInput: Locator;
-  private readonly calculateButton: Locator;
-  private readonly combinedPriceOutput: Locator;
+  readonly page: Page;
+  private readonly serviceSelect: Locator;
+  private readonly electricInput: Locator;
+  private readonly gasInput: Locator;
+  private readonly resetButton: Locator;
+
+  readonly DEFAULT_SERVICE_OPTION_VALUE = '';
 
   constructor(page: Page) {
     this.page = page;
-    this.serviceTypeSelect = this.page.getByTestId('service-type');
-    this.electricMeterInput = this.page.getByTestId('electric-meter');
-    this.gasMeterInput = this.page.getByTestId('gas-meter');
-    this.calculateButton = this.page.getByTestId('calculate-btn');
-    this.combinedPriceOutput = this.page.getByTestId('combined-price');
+    this.serviceSelect = page.locator('[data-testid="service-select"]');
+    this.electricInput = page.locator('[data-testid="electric-input"]');
+    this.gasInput = page.locator('[data-testid="gas-input"]');
+    this.resetButton = page.locator('[data-testid="reset-btn"]');
   }
 
   async goto(path: string = '/rate-calculator'): Promise<void> {
     await this.page.goto(path);
-    await this.waitForReady();
   }
 
-  async waitForReady(): Promise<void> {
-    await this.serviceTypeSelect.waitFor({ state: 'visible' });
+  async selectServiceByLabel(label: string): Promise<void> {
+    await this.serviceSelect.selectOption({ label });
   }
 
-  async selectServiceType(optionLabel: string): Promise<void> {
-    await this.serviceTypeSelect.selectOption({ label: optionLabel });
+  async selectServiceByValue(value: string): Promise<void> {
+    await this.serviceSelect.selectOption({ value });
   }
 
-  async isElectricMeterEnabled(): Promise<boolean> {
-    return await this.electricMeterInput.isEnabled();
+  async enterElectricUsage(units: string | number): Promise<void> {
+    await this.electricInput.fill(String(units));
   }
 
-  async isGasMeterEnabled(): Promise<boolean> {
-    return await this.gasMeterInput.isEnabled();
+  async enterGasUsage(units: string | number): Promise<void> {
+    await this.gasInput.fill(String(units));
   }
 
-  async fillElectricMeter(value: number | string): Promise<void> {
-    await this.electricMeterInput.fill('');
-    await this.electricMeterInput.fill(String(value));
+  async resetForm(): Promise<void> {
+    await this.resetButton.click();
   }
 
-  async fillGasMeter(value: number | string): Promise<void> {
-    await this.gasMeterInput.fill('');
-    await this.gasMeterInput.fill(String(value));
+  async getElectricUsageValue(): Promise<string> {
+    return await this.electricInput.inputValue();
   }
 
-  async getElectricMeterValue(): Promise<string> {
-    return await this.electricMeterInput.inputValue();
+  async getGasUsageValue(): Promise<string> {
+    return await this.gasInput.inputValue();
   }
 
-  async getGasMeterValue(): Promise<string> {
-    return await this.gasMeterInput.inputValue();
+  async getSelectedServiceValue(): Promise<string> {
+    return await this.serviceSelect.inputValue();
   }
 
-  async clickCalculate(): Promise<void> {
-    await this.calculateButton.click();
+  async getSelectedServiceLabel(): Promise<string> {
+    return await this.serviceSelect.evaluate((el) => (el as HTMLSelectElement).selectedOptions[0]?.label ?? '');
   }
 
-  async isCombinedPriceVisible(): Promise<boolean> {
-    return await this.combinedPriceOutput.isVisible();
+  async isServiceAtDefault(): Promise<boolean> {
+    const value = await this.getSelectedServiceValue();
+    return value === this.DEFAULT_SERVICE_OPTION_VALUE;
   }
 
-  async getCombinedPriceText(): Promise<string> {
-    await this.combinedPriceOutput.waitFor({ state: 'visible' });
-    const text = await this.combinedPriceOutput.textContent();
-    return (text ?? '').trim();
+  async isFormCleared(): Promise<boolean> {
+    const [elec, gas, isDefault] = await Promise.all([
+      this.getElectricUsageValue(),
+      this.getGasUsageValue(),
+      this.isServiceAtDefault(),
+    ]);
+    return elec === '' && gas === '' && isDefault;
   }
 }
