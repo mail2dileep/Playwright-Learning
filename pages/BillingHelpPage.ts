@@ -37,8 +37,7 @@ export class BillingHelpPage {
     await link.click();
 
     const winner = await Promise.race<
-      | Promise<{ type: 'popup'; page: Page }>
-      | Promise<{ type: 'download'; download: Download }>
+      { type: 'popup'; page: Page } | { type: 'download'; download: Download }
     >([
       popupPromise.then((p) => ({ type: 'popup' as const, page: p })),
       downloadPromise.then((d) => ({ type: 'download' as const, download: d })),
