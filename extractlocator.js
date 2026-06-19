@@ -15,9 +15,9 @@ async function extractLocators(url) {
   await page.goto(url, {
     waitUntil: "networkidle"
   });
-  await page.waitForTimeout(5000);
+ 
 
-try {
+ try {
 
   const calculatorLink =
     page.getByText(
@@ -38,27 +38,34 @@ try {
 
   }
 
-} catch(error) {
+} catch (error) {
 
   console.log(
     "Calculator link not found or not clickable"
   );
 
-}
+} 
 
   const pageTitle =
     await page.title();
+    const controlCount =
+  await page.locator(
+    "div.calculator_current input, div.calculator_current select, div.calculator_current button"
+  ).count();
+
+const html =
+  await page.locator(
+    "div.calculator_current"
+  ).innerHTML();
 
   const elements =
     await page.evaluate(() => {
       
-
-     const container =
+const container =
   document.querySelector(
-    "#maincontent > div > div.calc_estimate_res"
+    "div.calculator_current"
   );
-
- if (!container) {
+   if (!container) {
 
       console.error(
         "Calculator container not found"
@@ -67,18 +74,26 @@ try {
       return [];
 
     }
+ 
+
 
 const nodes =
   container.querySelectorAll(`
     input,
     button,
     select,
-    textarea,
+    textarea,    
+    a,
     [role='button'],
     [role='radio'],
     [role='checkbox'],
+    [role='combobox'],
     [data-testid]
   `);
+  console.log(
+  "Nodes Found:",
+  nodes.length
+);
 
     return Array.from(nodes).map(el => {
 
@@ -112,7 +127,11 @@ const label =
         `label[for="${id}"]`
       )?.innerText?.trim()
     : el.closest("label")
-        ?.innerText?.trim() || null;
+        ?.innerText?.trim() ||      
+      el.closest("fieldset")
+        ?.querySelector("legend")
+        ?.innerText?.trim() ||
+      null;
 
 const role =
   el.getAttribute(
@@ -172,6 +191,7 @@ if (
     `getByPlaceholder('${placeholder}')`;
 
 } else if (
+   el.tagName === "BUTTON" &&
   el.innerText &&
   el.innerText.trim()
 ) {
@@ -194,9 +214,23 @@ return {
 
   tag:
     el.tagName.toLowerCase(),
+    parentContainer:
+    "calculator_current",
+   disabled:
+    el.disabled || false,
+
+  enabled:
+    !el.disabled,
 
   text:
     (el.innerText || el.textContent || "").trim(),
+   displayName:
+    label ||
+    ariaLabel ||
+    (el.innerText || "").trim() ||
+    placeholder ||
+    name ||
+    id,
 
   id,
 
@@ -224,8 +258,6 @@ return {
 required:
   el.required || false,
 
-disabled:
-  el.disabled || false,
   
   value,
 
@@ -252,7 +284,26 @@ disabled:
   visible,
 
   className,
-  href
+  href,
+  locatorType:
+  recommendedLocator?.includes(
+    "getByTestId"
+  )
+    ? "testId"
+    : recommendedLocator?.includes(
+        "getByLabel"
+      )
+    ? "label"
+    : recommendedLocator?.includes(
+        "locator('#"
+      )
+    ? "id"
+    : recommendedLocator?.includes(
+        "getByText"
+      )
+    ? "text"
+    : "unknown",
+
 
 };
 });
@@ -271,15 +322,21 @@ disabled:
 output.elements =
   output.elements.filter(
     e =>
-      e.text ||
-      e.label ||
-      e.placeholder ||
-      e.id ||
-      e.testId ||
-      e.ariaLabel ||
-      e.name ||
-      e.href
+      e.visible === true &&
+       e.recommendedLocator &&
+      (
+        e.text ||
+        e.label ||
+        e.placeholder ||
+        e.id ||
+        e.testId ||
+        e.ariaLabel ||
+        e.name ||
+        e.href
+      )
   );
+
+  
 
     output.elements.sort(
   (a, b) =>
@@ -313,5 +370,5 @@ console.log(
 }
 
 extractLocators(
-  "https://www.cpsenergy.com/content/corporate/en/my-home/savings-programs/rate_estimator_residential.html"
+  "https://www.cpsenergy.com/content/corporate/en/my-home/savings-programs/energy-cost-calculator.html"
 );
