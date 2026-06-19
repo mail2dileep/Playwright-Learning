@@ -1,111 +1,82 @@
-import { Page, Locator } from '@playwright/test';
+import { Page, Locator, expect } from '@playwright/test';
 
 export class RateCalculatorPage {
   private readonly page: Page;
-
-  // Locators
-  private readonly electricUsageDropdownLocator: Locator;
-  private readonly gasUsageDropdownLocator: Locator;
-  private readonly serviceTypeElectricOnlyRadioLocator: Locator;
-  private readonly serviceTypeElectricGasRadioLocator: Locator;
-  private readonly cityLimitsYesRadioLocator: Locator;
-  private readonly cityLimitsNoRadioLocator: Locator;
-  private readonly trashCartSmallRadioLocator: Locator;
-  private readonly trashCartMediumRadioLocator: Locator;
-  private readonly trashCartLargeRadioLocator: Locator;
-  private readonly trashCartNoneRadioLocator: Locator;
+  private readonly electricUsageDropdown: Locator;
+  private readonly gasUsageDropdown: Locator;
+  private readonly electricOnlyServiceTypeRadio: Locator;
+  private readonly electricAndGasServiceTypeRadio: Locator;
+  // TODO: Locator for 'Calculate' button not found in catalog
+  // TODO: Locator for 'Calculated Price' display not found in catalog
 
   constructor(page: Page) {
     this.page = page;
-    this.electricUsageDropdownLocator = page.getByLabel('Average estimated electric usage (kWh):\nhelp info');
-    this.gasUsageDropdownLocator = page.getByLabel('Average estimated gas usage (CCF):\nhelp info');
-    this.serviceTypeElectricOnlyRadioLocator = page.locator('#serviceType01');
-    this.serviceTypeElectricGasRadioLocator = page.locator('#serviceType02');
-    this.cityLimitsYesRadioLocator = page.locator('#citylimits01');
-    this.cityLimitsNoRadioLocator = page.locator('#citylimits02');
-    this.trashCartSmallRadioLocator = page.locator('#trashcart01');
-    this.trashCartMediumRadioLocator = page.locator('#trashcart02');
-    this.trashCartLargeRadioLocator = page.locator('#trashcart03');
-    this.trashCartNoneRadioLocator = page.locator('#trashcart04');
+    this.electricUsageDropdown = page.getByLabel('Average estimated electric usage (kWh):\nhelp info');
+    this.gasUsageDropdown = page.getByLabel('Average estimated gas usage (CCF):\nhelp info');
+    this.electricOnlyServiceTypeRadio = page.locator('#serviceType01');
+    this.electricAndGasServiceTypeRadio = page.locator('#serviceType02');
   }
 
   /**
-   * Navigates to the Rate Estimator Residential page.
-   * @param url The URL to navigate to.
+   * Selects the 'Electric only' service type option.
    */
-  async navigateToRateEstimatorResidentialPage(url: string): Promise<void> {
-    await this.page.goto(url);
+  async selectElectricOnlyServiceType(): Promise<void> {
+    await this.electricOnlyServiceTypeRadio.click();
   }
 
   /**
-   * Returns the Locator for the Electric Usage dropdown.
+   * Sets the estimated electric usage.
+   * @param usageKwh The electric usage value to select (e.g., '500', '1000').
    */
-  getElectricUsageDropdown(): Locator {
-    return this.electricUsageDropdownLocator;
+  async setElectricUsage(usageKwh: string): Promise<void> {
+    await this.electricUsageDropdown.selectOption({ label: usageKwh });
   }
 
   /**
-   * Returns the Locator for the Gas Usage dropdown.
+   * Retrieves the currently selected electric usage value.
+   * @returns The selected electric usage value as a string.
    */
-  getGasUsageDropdown(): Locator {
-    return this.gasUsageDropdownLocator;
+  async getElectricUsageValue(): Promise<string> {
+    return await this.electricUsageDropdown.inputValue();
   }
 
   /**
-   * Returns the Locator for the "Electric Only" service type radio button.
+   * Checks if the electric usage field is enabled.
+   * @returns True if the electric usage field is enabled, false otherwise.
    */
-  getServiceTypeElectricOnlyRadio(): Locator {
-    return this.serviceTypeElectricOnlyRadioLocator;
+  async isElectricUsageFieldEnabled(): Promise<boolean> {
+    return await this.electricUsageDropdown.isEnabled();
   }
 
   /**
-   * Returns the Locator for the "Electric & Gas" service type radio button.
+   * Checks if the gas usage field is disabled or hidden.
+   * @returns True if the gas usage field is disabled or hidden, false otherwise.
    */
-  getServiceTypeElectricGasRadio(): Locator {
-    return this.serviceTypeElectricGasRadioLocator;
+  async isGasUsageFieldDisabledOrHidden(): Promise<boolean> {
+    const isDisabled = await this.gasUsageDropdown.isDisabled();
+    const isHidden = await this.gasUsageDropdown.isHidden();
+    return isDisabled || isHidden;
   }
 
   /**
-   * Returns the Locator for the "City Limits Yes" radio button.
+   * Clicks the 'Calculate' button to compute the rates.
+   * TODO: Locator not found in catalog. Placeholder for future implementation.
    */
-  getCityLimitsYesRadio(): Locator {
-    return this.cityLimitsYesRadioLocator;
+  async clickCalculateButton(): Promise<void> {
+    console.warn("WARNING: 'Calculate' button locator not found in catalog. This action cannot be performed.");
+    // Example of how it would be called if a locator was available:
+    // await this.calculateButton.click();
   }
 
   /**
-   * Returns the Locator for the "City Limits No" radio button.
+   * Retrieves the calculated price displayed on the page.
+   * TODO: Locator for 'Calculated Price' display not found in catalog. Placeholder for future implementation.
+   * @returns The calculated price as a string, or an empty string if not found.
    */
-  getCityLimitsNoRadio(): Locator {
-    return this.cityLimitsNoRadioLocator;
+  async getCalculatedPrice(): Promise<string> {
+    console.warn("WARNING: 'Calculated Price' display locator not found in catalog. Cannot retrieve price.");
+    // Example of how it would be called if a locator was available:
+    // return await this.calculatedPriceDisplay.textContent() || '';
+    return '';
   }
-
-  /**
-   * Returns the Locator for the "Small" trash cart radio button.
-   */
-  getTrashCartSmallRadio(): Locator {
-    return this.trashCartSmallRadioLocator;
-  }
-
-  /**
-   * Returns the Locator for the "Medium" trash cart radio button.
-   */
-  getTrashCartMediumRadio(): Locator {
-    return this.trashCartMediumRadioLocator;
-  }
-
-  /**
-   * Returns the Locator for the "Large" trash cart radio button.
-   */
-  getTrashCartLargeRadio(): Locator {
-    return this.trashCartLargeRadioLocator;
-  }
-
-  /**
-   * Returns the Locator for the "None" trash cart radio button.
-   */
-  getTrashCartNoneRadio(): Locator {
-    return this.trashCartNoneRadioLocator;
-  }
-
-  // TODO: Locators for "Calculate/Reset buttons" were not found in the catalog and thus cannot be implemented.
 }
