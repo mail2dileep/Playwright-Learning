@@ -51,25 +51,34 @@ try {
 
   const elements =
     await page.evaluate(() => {
+      
 
-      const nodes =
-       document.querySelectorAll(
-  `
-  input,
-  button,
-  select,
-  textarea,
-  a,
-  [role='button'],
-  [role='radio'],
-  [role='checkbox'],
-  [role='combobox'],
-  [role='textbox'],
-  [role='link'],
-  [role='menuitem'],
-  [data-testid]
-  `
-);
+     const container =
+  document.querySelector(
+    "#maincontent > div > div.calc_estimate_res"
+  );
+
+ if (!container) {
+
+      console.error(
+        "Calculator container not found"
+      );
+
+      return [];
+
+    }
+
+const nodes =
+  container.querySelectorAll(`
+    input,
+    button,
+    select,
+    textarea,
+    [role='button'],
+    [role='radio'],
+    [role='checkbox'],
+    [data-testid]
+  `);
 
     return Array.from(nodes).map(el => {
 
@@ -99,7 +108,7 @@ const value =
 	
 const label =
   id
-    ? document.querySelector(
+    ? container.querySelector(
         `label[for="${id}"]`
       )?.innerText?.trim()
     : el.closest("label")
@@ -272,12 +281,19 @@ output.elements =
       e.href
   );
 
+    output.elements.sort(
+  (a, b) =>
+    (a.locatorPriority || 99) -
+    (b.locatorPriority || 99)
+);
+
  const outputFile =
   path.join(
     __dirname,
     "locators",
     "locators.json"
   );
+
 
 fs.writeFileSync(
   outputFile,
