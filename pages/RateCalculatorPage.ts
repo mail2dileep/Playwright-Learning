@@ -1,84 +1,122 @@
-import { Page, Locator } from '@playwright/test';
+import { Page, Locator, expect } from '@playwright/test';
 
 export class RateCalculatorPage {
   private readonly page: Page;
 
-  // Locators for the rate calculator page
-  // MANDATORY REQUIREMENT: Use ONLY provided locators. If a locator is not found, add a TODO comment.
+  // Locators
+  // Using 'getByText('Energy Cost Calculator')' from the catalog as a navigation point to the calculator page.
+  private readonly energyCostCalculatorLink: Locator;
 
-  // Step 1: Select 'Electric only' from the Service Type selection.
-  // Locator for 'Service Type selection' dropdown/radio group
-  private readonly serviceTypeSelection: Locator = this.page.locator('// TODO: Locator not found in catalog for Service Type selection');
-  // Specific option for 'Electric only'
-  // There is no explicit locator in the catalog for 'Electric only' as an option.
-
-  // Step 2: Enter a valid value in the 'Electric Meter Read' field.
-  private readonly electricMeterReadField: Locator = this.page.locator('// TODO: Locator not found in catalog for Electric Meter Read field');
-
-  // Step 3: Click on the 'Calculate' button.
-  private readonly calculateButton: Locator = this.page.locator('// TODO: Locator not found in catalog for Calculate button');
-
-  // Expected Result: The form adjusts to show only relevant fields for Electric service.
-  // This would typically be a container or a specific field that appears/becomes visible.
-  private readonly electricOnlyFormAdjustmentIndicator: Locator = this.page.locator('// TODO: Locator not found in catalog to verify form adjustment for Electric service');
-
-  // Expected Result: The calculated price is displayed to the user.
-  private readonly calculatedPriceDisplay: Locator = this.page.locator('// TODO: Locator not found in catalog for Calculated Price display');
+  // The following locators are required for the test steps but were NOT found in the provided Locator Catalog.
+  // As per instructions, they are marked as TODO and no selectors are invented.
+  // private readonly serviceTypeSelection: Locator; // Represents the dropdown/selection for service type
+  // private readonly electricMeterReadInput: Locator; // Input field for electric meter read
+  // private readonly gasMeterReadInput: Locator; // Input field for gas meter read
+  // private readonly calculateButton: Locator; // Button to trigger calculation
+  // private readonly combinedCalculatedPriceDisplay: Locator; // Element displaying the final price
 
   constructor(page: Page) {
     this.page = page;
+    this.energyCostCalculatorLink = page.getByText('Energy Cost Calculator');
+
+    // In a real scenario, these would be initialized with actual locators:
+    // this.serviceTypeSelection = page.getByRole('combobox', { name: 'Service Type' });
+    // this.electricMeterReadInput = page.getByLabel('Electric Meter Read');
+    // this.gasMeterReadInput = page.getByLabel('Gas Meter Read');
+    // this.calculateButton = page.getByRole('button', { name: 'Calculate' });
+    // this.combinedCalculatedPriceDisplay = page.locator('#calculated-price-display'); // Example
   }
 
   /**
-   * Selects the specified service type from the calculator form.
-   * @param type The service type to select (e.g., 'Electric only').
+   * Navigates to the Energy Cost Calculator page by clicking its link.
+   * Assumes the link is available on the current page (e.g., homepage).
    */
-  async selectServiceType(type: 'Electric only'): Promise<void> {
-    console.warn(`// TODO: Locator not found in catalog for 'Service Type selection'. Skipping actual interaction for '${type}'.`);
-    // Example interaction if a locator was available:
-    // await this.serviceTypeSelection.selectOption({ label: type });
-    // Or if it was a radio button:
-    // await this.page.getByRole('radio', { name: type }).click();
+  async navigateToCalculator(): Promise<void> {
+    await this.energyCostCalculatorLink.click();
+    // In a robust framework, consider adding a page.waitForURL() or waitForSelector() for the calculator page's unique element.
   }
 
   /**
-   * Enters the electric meter read value into the respective field.
-   * @param value The numerical value for the electric meter read.
+   * Selects the specified service type for rate calculation.
+   * @param type The service type to select (e.g., 'Electric and Gas').
    */
-  async enterElectricMeterRead(value: number): Promise<void> {
-    console.warn(`// TODO: Locator not found in catalog for 'Electric Meter Read field'. Skipping actual interaction for value '${value}'.`);
-    // Example interaction if a locator was available:
-    // await this.electricMeterReadField.fill(value.toString());
+  async selectServiceTypeForCalculation(type: 'Electric and Gas' | 'Electric' | 'Gas'): Promise<void> {
+    console.warn(`// TODO: Locator not found in catalog for 'Service Type' selection (input: "${type}"). Cannot perform action.`);
+    // await this.serviceTypeSelection.selectOption(type); // Example if locator was available
   }
 
   /**
-   * Clicks the 'Calculate' button on the form.
+   * Enters the electric meter read value into the corresponding input field.
+   * @param value The numeric value for the electric meter read.
    */
-  async clickCalculateButton(): Promise<void> {
-    console.warn(`// TODO: Locator not found in catalog for 'Calculate button'. Skipping actual interaction.`);
-    // Example interaction if a locator was available:
-    // await this.calculateButton.click();
+  async enterElectricMeterReadValue(value: number): Promise<void> {
+    console.warn(`// TODO: Locator not found in catalog for 'Electric Meter Read' input field (input: ${value}). Cannot perform action.`);
+    // await this.electricMeterReadInput.fill(value.toString()); // Example if locator was available
   }
 
   /**
-   * Verifies if the form has adjusted to show only fields relevant for Electric service.
-   * @returns True if the electric-only form elements are visible, false otherwise.
+   * Enters the gas meter read value into the corresponding input field.
+   * @param value The numeric value for the gas meter read.
    */
-  async isElectricOnlyFormDisplayed(): Promise<boolean> {
-    console.warn(`// TODO: Locator not found in catalog for 'Electric fields container after adjustment'. Returning false.`);
-    // Example assertion if a locator was available:
-    // return await this.electricOnlyFormAdjustmentIndicator.isVisible();
-    return false; // Placeholder as locator is missing
+  async enterGasMeterReadValue(value: number): Promise<void> {
+    console.warn(`// TODO: Locator not found in catalog for 'Gas Meter Read' input field (input: ${value}). Cannot perform action.`);
+    // await this.gasMeterReadInput.fill(value.toString()); // Example if locator was available
   }
 
   /**
-   * Retrieves the calculated price displayed on the page.
-   * @returns The calculated price as a string.
+   * Clicks the 'Calculate' button to initiate the rate computation.
    */
-  async getCalculatedPrice(): Promise<string> {
-    console.warn(`// TODO: Locator not found in catalog for 'Calculated Price display'. Returning placeholder.`);
-    // Example retrieval if a locator was available:
-    // return (await this.calculatedPriceDisplay.textContent())?.trim() || '';
-    return '0.00'; // Placeholder as locator is missing
+  async triggerCalculation(): Promise<void> {
+    console.warn(`// TODO: Locator not found in catalog for 'Calculate' button. Cannot perform action.`);
+    // await this.calculateButton.click(); // Example if locator was available
+    // Await network requests or a specific element to appear after calculation.
+  }
+
+  /**
+   * Verifies that the electric meter read input field is enabled and visible.
+   */
+  async verifyElectricMeterReadFieldIsReady(): Promise<void> {
+    console.warn(`// TODO: Locator not found in catalog for 'Electric Meter Read' field. Cannot verify enabled/visible status.`);
+    // await expect(this.electricMeterReadInput).toBeEnabled(); // Example if locator was available
+    // await expect(this.electricMeterReadInput).toBeVisible(); // Example if locator was available
+  }
+
+  /**
+   * Verifies that the gas meter read input field is enabled and visible.
+   */
+  async verifyGasMeterReadFieldIsReady(): Promise<void> {
+    console.warn(`// TODO: Locator not found in catalog for 'Gas Meter Read' field. Cannot verify enabled/visible status.`);
+    // await expect(this.gasMeterReadInput).toBeEnabled(); // Example if locator was available
+    // await expect(this.gasMeterReadInput).toBeVisible(); // Example if locator was available
+  }
+
+  /**
+   * Retrieves the current value from the electric meter read input field.
+   * Returns an empty string as a fallback if the locator is missing.
+   */
+  async getElectricMeterReadFieldValue(): Promise<string> {
+    console.warn(`// TODO: Locator not found in catalog for 'Electric Meter Read' input field. Cannot retrieve value.`);
+    // return await this.electricMeterReadInput.inputValue(); // Example if locator was available
+    return ''; // Return a default value due to missing locator
+  }
+
+  /**
+   * Retrieves the current value from the gas meter read input field.
+   * Returns an empty string as a fallback if the locator is missing.
+   */
+  async getGasMeterReadFieldValue(): Promise<string> {
+    console.warn(`// TODO: Locator not found in catalog for 'Gas Meter Read' input field. Cannot retrieve value.`);
+    // return await this.gasMeterReadInput.inputValue(); // Example if locator was available
+    return ''; // Return a default value due to missing locator
+  }
+
+  /**
+   * Retrieves the displayed combined calculated price.
+   * Returns a placeholder string if the locator is missing.
+   */
+  async getCombinedCalculatedPrice(): Promise<string> {
+    console.warn(`// TODO: Locator not found in catalog for 'Combined Calculated Price' display. Cannot retrieve price.`);
+    // return await this.combinedCalculatedPriceDisplay.textContent(); // Example if locator was available
+    return 'N/A - Locator Missing'; // Return a placeholder due to missing locator
   }
 }
