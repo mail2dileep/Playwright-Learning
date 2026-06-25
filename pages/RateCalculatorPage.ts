@@ -16,7 +16,7 @@ export class RateCalculatorPage {
     constructor(page: Page) {
         this.page = page;
         this.electricOnlyRadio = page.getByLabel('Electric Only');
-        this.electricAndGasRadio = page.getByLabel('Electric and Gas');
+        this.electricAndGasRadio = page.getByLabel('Electric &  Gas');
         this.electricMeterInput = page.getByLabel('Electric Meter Read');
         this.gasMeterInput = page.getByLabel('Gas Meter Read');
         this.monthDropdown = page.getByLabel('Select Month');
