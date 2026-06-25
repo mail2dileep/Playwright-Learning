@@ -1,118 +1,65 @@
 import { Page, Locator } from '@playwright/test';
 
 export class RateCalculatorPage {
-  private readonly page: Page;
-  private readonly monthSelector: Locator;
-  private readonly previousReadInput: Locator;
-  private readonly currentReadInput: Locator;
-  private readonly estimatedElectricUseInput: Locator;
-  private readonly estimatedGasUseInput: Locator;
-  private readonly electricServiceRadio: Locator;
-  private readonly electricGasServiceRadio: Locator;
-  private readonly howToReadYourBillButton: Locator;
-  private readonly howToFindUsageButton: Locator;
-  private readonly resetButton: Locator;
-  private readonly calculateButton: Locator;
+    readonly page: Page;
+    readonly electricOnlyRadio: Locator;
+    readonly electricAndGasRadio: Locator;
+    readonly electricMeterInput: Locator;
+    readonly gasMeterInput: Locator;
+    readonly monthDropdown: Locator;
+    readonly calculateButton: Locator;
+    readonly resetButton: Locator;
+    readonly readBillLink: Locator;
+    readonly findUsageLink: Locator;
+    readonly totalPriceDisplay: Locator;
 
-  constructor(page: Page) {
-    this.page = page;
-    this.monthSelector = page.getByLabel('Month');
-    this.previousReadInput = page.getByLabel('Enter Previous Read:');
-    this.currentReadInput = page.getByLabel('Enter Current Read:');
-    this.estimatedElectricUseInput = page.getByLabel('Estimated Electric use (kWh):');
-    this.estimatedGasUseInput = page.getByLabel('Estimated Gas use (Ccf):');
-    this.electricServiceRadio = page.locator('#e');
-    this.electricGasServiceRadio = page.locator('#eg');
-    this.howToReadYourBillButton = page.locator('#howToReadYourBillBtn');
-    this.howToFindUsageButton = page.locator('#howToFindUsageBtn');
-    this.resetButton = page.locator('#rateCalCancelBtn');
-    this.calculateButton = page.locator('#validateMoveInBtn');
-  }
-
-  /**
-   * Navigates to the rate calculator page. (Optional, if navigation is handled outside POM or in setup)
-   * @param url The URL to navigate to.
-   */
-  async navigate(url: string): Promise<void> {
-    await this.page.goto(url);
-  }
-
-  /**
-   * Selects a month from the dropdown.
-   * @param monthValue The value attribute of the month option (e.g., 'm06' for June).
-   */
-  async selectMonth(monthValue: string): Promise<void> {
-    await this.monthSelector.selectOption(monthValue);
-  }
-
-  /**
-   * Enters the previous meter read value.
-   * @param value The previous meter read value.
-   */
-  async enterPreviousRead(value: string): Promise<void> {
-    await this.previousReadInput.fill(value);
-  }
-
-  /**
-   * Enters the current meter read value.
-   * @param value The current meter read value.
-   */
-  async enterCurrentRead(value: string): Promise<void> {
-    await this.currentReadInput.fill(value);
-  }
-
-  /**
-   * Selects the service type (Electric or Electric/Gas).
-   * @param type 'electric' for Electric, 'electricGas' for Electric and Gas.
-   */
-  async selectServiceType(type: 'electric' | 'electricGas'): Promise<void> {
-    switch (type) {
-      case 'electric':
-        await this.electricServiceRadio.check();
-        break;
-      case 'electricGas':
-        await this.electricGasServiceRadio.check();
-        break;
-      default:
-        throw new Error(`Invalid service type: ${type}`);
+    constructor(page: Page) {
+        this.page = page;
+        this.electricOnlyRadio = page.getByLabel('Electric Only');
+        this.electricAndGasRadio = page.getByLabel('Electric and Gas');
+        this.electricMeterInput = page.getByLabel('Electric Meter Read');
+        this.gasMeterInput = page.getByLabel('Gas Meter Read');
+        this.monthDropdown = page.getByLabel('Select Month');
+        this.calculateButton = page.getByRole('button', { name: 'Calculate' });
+        this.resetButton = page.getByRole('button', { name: 'Reset' });
+        this.readBillLink = page.getByRole('link', { name: 'How to read your bill' });
+        this.findUsageLink = page.getByRole('link', { name: 'How to find Usage' });
+        this.totalPriceDisplay = page.locator('calculator_current').getByText('Total');
     }
-  }
 
-  /**
-   * Clicks the 'Calculate' button.
-   */
-  async clickCalculate(): Promise<void> {
-    await this.calculateButton.click();
-  }
+    async selectElectricOnly(): Promise<void> {
+        await this.electricOnlyRadio.check();
+    }
 
-  /**
-   * Clicks the 'Reset' button.
-   */
-  async clickReset(): Promise<void> {
-    await this.resetButton.click();
-  }
+    async selectElectricAndGas(): Promise<void> {
+        await this.electricAndGasRadio.check();
+    }
 
-  /**
-   * Retrieves the current value of the previous read input field.
-   * @returns The value of the previous read input field.
-   */
-  async getPreviousReadValue(): Promise<string> {
-    return await this.previousReadInput.inputValue();
-  }
+    async enterElectricRead(value: string): Promise<void> {
+        await this.electricMeterInput.fill(value);
+    }
 
-  /**
-   * Retrieves the current value of the estimated electric use input field.
-   * @returns The value of the estimated electric use input field.
-   */
-  async getEstimatedElectricUseValue(): Promise<string> {
-    return await this.estimatedElectricUseInput.inputValue();
-  }
+    async enterGasRead(value: string): Promise<void> {
+        await this.gasMeterInput.fill(value);
+    }
 
-  /**
-   * Checks if the Calculate button is enabled.
-   * @returns True if the button is enabled, false otherwise.
-   */
-  async isCalculateButtonEnabled(): Promise<boolean> {
-    return await this.calculateButton.isEnabled();
-  }
+    async selectMonth(month: string): Promise<void> {
+        await this.monthDropdown.selectOption(month);
+    }
+
+    async calculateBill(): Promise<void> {
+        await this.calculateButton.click();
+    }
+
+    async resetCalculator(): Promise<void> {
+        await this.resetButton.click();
+    }
+
+    async clickHowToReadBill(): Promise<void> {
+        await this.readBillLink.click();
+    }
+
+    async clickHowToFindUsage(): Promise<void> {
+        await this.findUsageLink.click();
+    }
 }
