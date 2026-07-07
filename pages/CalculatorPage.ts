@@ -1,66 +1,55 @@
-import { Page, Locator } from '@playwright/test';
+import { Page, Locator } from "@playwright/test";
 
 export class CalculatorPage {
   private readonly page: Page;
-
-  // Locators
   private readonly monthDropdown: Locator;
-  private readonly previousMeterReadInput: Locator;
-  private readonly currentMeterReadInput: Locator;
-  private readonly estimatedElectricUseInput: Locator;
-  private readonly estimatedGasUseInput: Locator;
-  private readonly electricOnlyServiceRadio: Locator;
-  private readonly electricAndGasServiceRadio: Locator;
+  private readonly previousReadInputField: Locator;
+  private readonly currentReadInputField: Locator;
+  private readonly estimatedElectricUseInputField: Locator;
+  private readonly estimatedGasUseInputField: Locator;
+  private readonly electricServiceRadioButton: Locator;
+  private readonly electricGasServiceRadioButton: Locator;
+  private readonly howToReadYourBillButton: Locator;
+  private readonly howToFindUsageButton: Locator;
+  private readonly resetButton: Locator;
   private readonly calculateButton: Locator;
 
   constructor(page: Page) {
     this.page = page;
     this.monthDropdown = page.getByLabel('Month');
-    this.previousMeterReadInput = page.getByLabel('Enter Previous Read:');
-    this.currentMeterReadInput = page.getByLabel('Enter Current Read:');
-    this.estimatedElectricUseInput = page.getByLabel('Estimated Electric use (kWh):');
-    this.estimatedGasUseInput = page.getByLabel('Estimated Gas use (Ccf):');
-    this.electricOnlyServiceRadio = page.locator('#e');
-    this.electricAndGasServiceRadio = page.locator('#eg');
+    this.previousReadInputField = page.getByLabel('Enter Previous Read:');
+    this.currentReadInputField = page.getByLabel('Enter Current Read:');
+    this.estimatedElectricUseInputField = page.getByLabel('Estimated Electric use (kWh):');
+    this.estimatedGasUseInputField = page.getByLabel('Estimated Gas use (Ccf):');
+    this.electricServiceRadioButton = page.locator('#e');
+    this.electricGasServiceRadioButton = page.locator('#eg');
+    this.howToReadYourBillButton = page.locator('#howToReadYourBillBtn');
+    this.howToFindUsageButton = page.locator('#howToFindUsageBtn');
+    this.resetButton = page.locator('#rateCalCancelBtn');
     this.calculateButton = page.locator('#validateMoveInBtn');
   }
 
   /**
-   * Selects a month from the month dropdown.
-   * @param monthValue The value of the month to select (e.g., 'm06' for June).
+   * Selects the 'Electric and Gas' service type radio button.
    */
-  async selectMonth(monthValue: string): Promise<void> {
-    await this.monthDropdown.selectOption(monthValue);
+  async selectElectricAndGasServiceType(): Promise<void> {
+    await this.electricGasServiceRadioButton.click();
   }
 
   /**
-   * Selects the 'Electric only' service type option.
+   * Enters the current electric meter read value.
+   * @param value The numeric value for the current electric read.
    */
-  async selectElectricOnlyService(): Promise<void> {
-    await this.electricOnlyServiceRadio.click();
+  async enterElectricCurrentRead(value: string): Promise<void> {
+    await this.currentReadInputField.fill(value);
   }
 
   /**
-   * Selects the 'Electric & Gas' service type option.
+   * Enters the estimated gas usage value.
+   * @param value The numeric value for the estimated gas use.
    */
-  async selectElectricAndGasService(): Promise<void> {
-    await this.electricAndGasServiceRadio.click();
-  }
-
-  /**
-   * Enters the previous meter read value.
-   * @param value The numeric value to enter as a string.
-   */
-  async enterPreviousMeterRead(value: string): Promise<void> {
-    await this.previousMeterReadInput.fill(value);
-  }
-
-  /**
-   * Enters the current meter read value.
-   * @param value The numeric value to enter as a string.
-   */
-  async enterCurrentMeterRead(value: string): Promise<void> {
-    await this.currentMeterReadInput.fill(value);
+  async enterGasEstimatedUse(value: string): Promise<void> {
+    await this.estimatedGasUseInputField.fill(value);
   }
 
   /**
@@ -71,42 +60,26 @@ export class CalculatorPage {
   }
 
   /**
-   * Retrieves the locator for the previous meter read input field.
-   * This method is intended for assertions in the test spec.
+   * Checks if the Estimated Gas use (Ccf) field is enabled.
+   * @returns A promise that resolves to true if the field is enabled, false otherwise.
    */
-  getPreviousMeterReadLocator(): Locator {
-    return this.previousMeterReadInput;
+  async isGasEstimatedUseFieldEnabled(): Promise<boolean> {
+    return await this.estimatedGasUseInputField.isEnabled();
   }
 
   /**
-   * Retrieves the locator for the current meter read input field.
-   * This method is intended for assertions in the test spec.
+   * Retrieves the value from the 'Enter Current Read' field.
+   * @returns A promise that resolves to the string value of the field.
    */
-  getCurrentMeterReadLocator(): Locator {
-    return this.currentMeterReadInput;
+  async getElectricCurrentReadValue(): Promise<string> {
+    return await this.currentReadInputField.inputValue();
   }
 
   /**
-   * Retrieves the locator for the estimated electric use input field.
-   * This method is intended for assertions in the test spec.
+   * Retrieves the value from the 'Estimated Gas use (Ccf)' field.
+   * @returns A promise that resolves to the string value of the field.
    */
-  getEstimatedElectricUseLocator(): Locator {
-    return this.estimatedElectricUseInput;
-  }
-
-  /**
-   * Retrieves the locator for the estimated gas use input field.
-   * This method is intended for assertions in the test spec.
-   */
-  getEstimatedGasUseLocator(): Locator {
-    return this.estimatedGasUseInput;
-  }
-
-  /**
-   * Retrieves the current value from the estimated electric use field.
-   * @returns The string value of the estimated electric use.
-   */
-  async getEstimatedElectricUseValue(): Promise<string> {
-    return await this.estimatedElectricUseInput.inputValue();
+  async getGasEstimatedUseValue(): Promise<string> {
+    return await this.estimatedGasUseInputField.inputValue();
   }
 }
