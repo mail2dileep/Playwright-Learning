@@ -2,117 +2,140 @@ import { Page, Locator } from '@playwright/test';
 
 export class RateCalculatorPage {
   private readonly page: Page;
-
-  // Locators
   private readonly monthDropdown: Locator;
-  private readonly previousElectricReadInput: Locator;
-  private readonly currentElectricReadInput: Locator;
+  private readonly previousReadInput: Locator;
+  private readonly currentReadInput: Locator;
   private readonly estimatedElectricUseOutput: Locator;
-  private readonly estimatedGasUseField: Locator; // This field serves as both estimated output and gas input
-  private readonly electricServiceTypeRadio: Locator;
-  private readonly electricAndGasServiceTypeRadio: Locator;
+  private readonly estimatedGasUseOutput: Locator;
+  private readonly electricServiceRadio: Locator;
+  private readonly electricGasServiceRadio: Locator;
+  private readonly resetButton: Locator;
   private readonly calculateButton: Locator;
 
   constructor(page: Page) {
     this.page = page;
-
-    // Initialize locators using recommendedLocator from catalog
     this.monthDropdown = page.getByLabel('Month');
-    this.previousElectricReadInput = page.getByLabel('Enter Previous Read:');
-    this.currentElectricReadInput = page.getByLabel('Enter Current Read:');
+    this.previousReadInput = page.getByLabel('Enter Previous Read:');
+    this.currentReadInput = page.getByLabel('Enter Current Read:');
     this.estimatedElectricUseOutput = page.getByLabel('Estimated Electric use (kWh):');
-    // As per analysis, 'Estimated Gas use (Ccf):' is the only text input related to Gas
-    // and is assumed to become an input field upon selecting Electric and Gas service.
-    this.estimatedGasUseField = page.getByLabel('Estimated Gas use (Ccf):');
-    this.electricServiceTypeRadio = page.locator('#e');
-    this.electricAndGasServiceTypeRadio = page.locator('#eg');
+    this.estimatedGasUseOutput = page.getByLabel('Estimated Gas use (Ccf):');
+    this.electricServiceRadio = page.locator('#e');
+    this.electricGasServiceRadio = page.locator('#eg');
+    this.resetButton = page.locator('#rateCalCancelBtn');
     this.calculateButton = page.locator('#validateMoveInBtn');
   }
 
   /**
-   * Selects the specified service type using the corresponding radio button.
-   * @param type The service type to select: 'Electric' or 'Electric and Gas'.
+   * Navigates to the specified URL.
+   * @param url The URL to navigate to.
    */
-  async selectServiceType(type: 'Electric' | 'Electric and Gas'): Promise<void> {
-    if (type === 'Electric') {
-      await this.electricServiceTypeRadio.click();
-    } else if (type === 'Electric and Gas') {
-      await this.electricAndGasServiceTypeRadio.click();
-    } else {
-      throw new Error(`Invalid service type: ${type}`);
+  async navigateTo(url: string): Promise<void> {
+    await this.page.goto(url);
+  }
+
+  /**
+   * Selects a month from the dropdown.
+   * @param monthValue The value attribute of the month option (e.g., 'm10' for October).
+   */
+  async selectMonth(monthValue: string): Promise<void> {
+    await this.monthDropdown.selectOption(monthValue);
+  }
+
+  /**
+   * Enters a value into the previous meter read input field.
+   * @param value The previous meter read value.
+   */
+  async enterPreviousRead(value: string): Promise<void> {
+    await this.previousReadInput.fill(value);
+  }
+
+  /**
+   * Enters a value into the current meter read input field.
+   * @param value The current meter read value.
+   */
+  async enterCurrentRead(value: string): Promise<void> {
+    await this.currentReadInput.fill(value);
+  }
+
+  /**
+   * Selects the specified service type radio button.
+   * @param type 'E' for Electric only, 'EG' for Electric and Gas.
+   */
+  async selectServiceType(type: 'E' | 'EG'): Promise<void> {
+    if (type === 'E') {
+      await this.electricServiceRadio.check();
+    } else if (type === 'EG') {
+      await this.electricGasServiceRadio.check();
     }
   }
 
   /**
-   * Enters a numeric value into the 'Enter Previous Read:' field.
-   * @param value The value to enter.
-   */
-  async enterPreviousElectricRead(value: string): Promise<void> {
-    await this.previousElectricReadInput.fill(value);
-  }
-
-  /**
-   * Enters a numeric value into the 'Enter Current Read:' field.
-   * @param value The value to enter.
-   */
-  async enterCurrentElectricRead(value: string): Promise<void> {
-    await this.currentElectricReadInput.fill(value);
-  }
-
-  /**
-   * Enters a numeric value into the 'Estimated Gas use (Ccf):' field,
-   * which is assumed to serve as the Gas input field when 'Electric and Gas' service is selected.
-   * @param value The value to enter.
-   */
-  async enterGasRead(value: string): Promise<void> {
-    await this.estimatedGasUseField.fill(value);
-  }
-
-  /**
-   * Clicks the 'Calculate' button.
+   * Clicks the 'Calculate' button to trigger usage calculation.
    */
   async clickCalculateButton(): Promise<void> {
     await this.calculateButton.click();
   }
 
   /**
-   * Returns the Locator for the 'Enter Previous Read:' field.
-   * @returns Locator
+   * Clicks the 'Reset' button to clear all inputs and results.
    */
-  getPreviousElectricReadLocator(): Locator {
-    return this.previousElectricReadInput;
+  async clickResetButton(): Promise<void> {
+    await this.resetButton.click();
   }
 
   /**
-   * Returns the Locator for the 'Enter Current Read:' field.
-   * @returns Locator
+   * Retrieves the current value of the previous meter read input field.
+   * @returns The previous meter read value as a string.
    */
-  getCurrentElectricReadLocator(): Locator {
-    return this.currentElectricReadInput;
+  async getPreviousReadValue(): Promise<string> {
+    return this.previousReadInput.inputValue();
   }
 
   /**
-   * Returns the Locator for the 'Estimated Electric use (kWh):' output field.
-   * @returns Locator
+   * Retrieves the current value of the current meter read input field.
+   * @returns The current meter read value as a string.
    */
-  getEstimatedElectricUseLocator(): Locator {
-    return this.estimatedElectricUseOutput;
+  async getCurrentReadValue(): Promise<string> {
+    return this.currentReadInput.inputValue();
   }
 
   /**
-   * Returns the Locator for the 'Estimated Gas use (Ccf):' field.
-   * This locator is used for both enabling assertion and value assertion for Gas input/output.
-   * @returns Locator
+   * Retrieves the estimated electric use (kWh) displayed.
+   * @returns The estimated electric use as a string.
    */
-  getEstimatedGasUseLocator(): Locator {
-    return this.estimatedGasUseField;
+  async getEstimatedElectricUse(): Promise<string> {
+    return this.estimatedElectricUseOutput.inputValue();
   }
 
   /**
-   * Returns the Locator for the 'Electric and Gas' service type radio button.
-   * @returns Locator
+   * Retrieves the estimated gas use (Ccf) displayed.
+   * @returns The estimated gas use as a string.
    */
-  getElectricAndGasServiceTypeRadioLocator(): Locator {
-      return this.electricAndGasServiceTypeRadio;
+  async getEstimatedGasUse(): Promise<string> {
+    return this.estimatedGasUseOutput.inputValue();
+  }
+
+  /**
+   * Retrieves the value of the currently selected month in the dropdown.
+   * @returns The selected month's value attribute as a string (e.g., 'm06').
+   */
+  async getSelectedMonthValue(): Promise<string> {
+    return (await this.monthDropdown.evaluate((node: HTMLSelectElement) => node.value)).toString();
+  }
+
+  /**
+   * Checks if the Electric service type radio button is selected.
+   * @returns True if selected, false otherwise.
+   */
+  async isElectricServiceSelected(): Promise<boolean> {
+    return this.electricServiceRadio.isChecked();
+  }
+
+  /**
+   * Checks if the Electric and Gas service type radio button is selected.
+   * @returns True if selected, false otherwise.
+   */
+  async isElectricGasServiceSelected(): Promise<boolean> {
+    return this.electricGasServiceRadio.isChecked();
   }
 }
