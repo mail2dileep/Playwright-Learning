@@ -1,34 +1,41 @@
 import { test, expect } from '@playwright/test';
-import { PDFResourcePage } from '../pages/PDFResourcePage';
+import { CalculatorPage } from '../pages/CalculatorPage';
 
-test.describe('PDF Resource Links Validation', () => {
-  test('Verify PDF Resource Links open correctly', async ({ page, context }) => {
-    // Navigate to the page where these links are present
-    // For this example, we assume the page is already at the correct URL
-    // await page.goto('YOUR_APPLICATION_URL_HERE'); 
+test.describe('PDF Resource Links Verification', () => {
+  let calculatorPage: CalculatorPage;
 
-    const pdfResourcePage = new PDFResourcePage(page);
+  test.beforeEach(async ({ page }) => {
+    calculatorPage = new CalculatorPage(page);
+    // Assume navigation to the calculator page is handled here
+    // For demonstration, we'll use a placeholder URL
+    await page.goto('https://example.com/calculator'); 
+  });
 
+  test('should open "How to read your bill" PDF in a new tab/viewer', async ({ page }) => {
     // Step 1: Click on 'How to read your bill' link.
-    // Expected Result: The corresponding PDF document opens in a new tab or viewer.
-    const [howToReadBillPage] = await Promise.all([
-      context.waitForEvent('page'),
-      pdfResourcePage.clickHowToReadYourBillLink(),
+    const [newPdfPage] = await Promise.all([
+      page.waitForEvent('popup'),
+      calculatorPage.clickHowToReadYourBillLink(),
     ]);
-    expect(howToReadBillPage).toBeDefined();
-    // Optional: Further assertions can be added here to validate the new page's URL or content,
-    // e.g., expect(howToReadBillPage.url()).toContain('.pdf');
-    await howToReadBillPage.close(); // Close the new tab/window
 
-    // Step 2: Click on 'How to find Usage' link.
     // Expected Result: The corresponding PDF document opens in a new tab or viewer.
-    const [howToFindUsagePage] = await Promise.all([
-      context.waitForEvent('page'),
-      pdfResourcePage.clickHowToFindUsageLink(),
+    expect(newPdfPage).toBeDefined();
+    // Check if the URL of the new page indicates a PDF document
+    expect(newPdfPage.url()).toMatch(/\/(.*\.pdf$)/);
+    await newPdfPage.close();
+  });
+
+  test('should open "How to find Usage" PDF in a new tab/viewer', async ({ page }) => {
+    // Step 2: Click on 'How to find Usage' link.
+    const [newPdfPage] = await Promise.all([
+      page.waitForEvent('popup'),
+      calculatorPage.clickHowToFindUsageLink(),
     ]);
-    expect(howToFindUsagePage).toBeDefined();
-    // Optional: Further assertions can be added here to validate the new page's URL or content,
-    // e.g., expect(howToFindUsagePage.url()).toContain('.pdf');
-    await howToFindUsagePage.close(); // Close the new tab/window
+
+    // Expected Result: The corresponding PDF document opens in a new tab or viewer.
+    expect(newPdfPage).toBeDefined();
+    // Check if the URL of the new page indicates a PDF document
+    expect(newPdfPage.url()).toMatch(/\/(.*\.pdf$)/);
+    await newPdfPage.close();
   });
 });
