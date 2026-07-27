@@ -2,73 +2,77 @@ import { Page, Locator } from '@playwright/test';
 
 export class RateCalculatorPage {
   private readonly page: Page;
-  private readonly monthDropdown: Locator;
-  private readonly previousMeterReadInput: Locator;
-  private readonly currentMeterReadInput: Locator;
-  private readonly estimatedElectricUseInput: Locator;
-  private readonly estimatedGasUseInput: Locator;
-  private readonly electricOnlyRadio: Locator;
-  private readonly electricGasRadio: Locator;
-  private readonly howToReadYourBillButton: Locator;
-  private readonly howToFindUsageButton: Locator;
-  private readonly resetButton: Locator;
+  private readonly electricAndGasServiceRadioButton: Locator;
+  private readonly previousElectricReadInput: Locator;
+  private readonly currentElectricReadInput: Locator;
+  private readonly estimatedElectricUseOutput: Locator;
+  private readonly estimatedGasUseOutput: Locator;
   private readonly calculateButton: Locator;
 
   constructor(page: Page) {
     this.page = page;
-    this.monthDropdown = page.getByLabel('Month');
-    this.previousMeterReadInput = page.getByLabel('Enter Previous Read:');
-    this.currentMeterReadInput = page.getByLabel('Enter Current Read:');
-    this.estimatedElectricUseInput = page.getByLabel('Estimated Electric use (kWh):');
-    this.estimatedGasUseInput = page.getByLabel('Estimated Gas use (Ccf):');
-    this.electricOnlyRadio = page.locator('#e');
-    this.electricGasRadio = page.locator('#eg');
-    this.howToReadYourBillButton = page.locator('#howToReadYourBillBtn');
-    this.howToFindUsageButton = page.locator('#howToFindUsageBtn');
-    this.resetButton = page.locator('#rateCalCancelBtn');
-    this.calculateButton = page.locator('#validateMoveInBtn');
+    // Locators based on catalog and priority
+    this.electricAndGasServiceRadioButton = page.locator('#eg'); // Recommended: locator('#eg')
+    this.previousElectricReadInput = page.getByLabel('Enter Previous Read:'); // Recommended: getByLabel('Enter Previous Read:')
+    this.currentElectricReadInput = page.getByLabel('Enter Current Read:'); // Recommended: getByLabel('Enter Current Read:')
+    this.estimatedElectricUseOutput = page.getByLabel('Estimated Electric use (kWh):'); // Recommended: getByLabel('Estimated Electric use (kWh):')
+    this.estimatedGasUseOutput = page.getByLabel('Estimated Gas use (Ccf):'); // Recommended: getByLabel('Estimated Gas use (Ccf):')
+    this.calculateButton = page.locator('#validateMoveInBtn'); // Recommended: locator('#validateMoveInBtn')
   }
 
   /**
-   * Selects the 'Electric only' service type radio button.
+   * Selects the 'Electric and Gas' service type radio button.
    */
-  async selectElectricOnlyServiceType(): Promise<void> {
-    await this.electricOnlyRadio.click();
+  async selectServiceTypeElectricAndGas(): Promise<void> {
+    await this.electricAndGasServiceRadioButton.click();
   }
 
   /**
-   * Enters a value into the Previous Meter Read field.
-   * @param readValue The value to enter.
+   * Enters values into the previous and current electric meter read fields.
+   * @param previousRead The value for the previous electric meter read.
+   * @param currentRead The value for the current electric meter read.
    */
-  async enterPreviousMeterRead(readValue: string): Promise<void> {
-    await this.previousMeterReadInput.fill(readValue);
+  async enterElectricMeterReads(previousRead: string, currentRead: string): Promise<void> {
+    await this.previousElectricReadInput.fill(previousRead);
+    await this.currentElectricReadInput.fill(currentRead);
   }
 
   /**
-   * Clicks the Calculate button.
+   * Enters a value into the estimated gas use field. This field becomes editable after selecting 'Electric and Gas'.
+   * @param gasValue The value for the estimated gas use.
+   */
+  async enterEstimatedGasUse(gasValue: string): Promise<void> {
+    await this.estimatedGasUseOutput.fill(gasValue);
+  }
+
+  /**
+   * Clicks the 'Calculate' button to compute service costs.
    */
   async clickCalculateButton(): Promise<void> {
     await this.calculateButton.click();
   }
 
   /**
-   * Returns the Locator for the Previous Meter Read input field.
+   * Returns the Locator for the current electric meter read input field for assertions.
+   * @returns A Playwright Locator for the current electric meter read input.
    */
-  getPreviousMeterReadInputField(): Locator {
-    return this.previousMeterReadInput;
+  getCurrentElectricReadInputField(): Locator {
+    return this.currentElectricReadInput;
   }
 
   /**
-   * Returns the Locator for the Estimated Gas Use input field.
+   * Returns the Locator for the estimated gas use input/output field for assertions.
+   * @returns A Playwright Locator for the estimated gas use field.
    */
   getEstimatedGasUseInputField(): Locator {
-    return this.estimatedGasUseInput;
+    return this.estimatedGasUseOutput;
   }
 
   /**
-   * Returns the Locator for the Estimated Electric Use input field.
+   * Returns the Locator for the estimated electric use output field for assertions.
+   * @returns A Playwright Locator for the estimated electric use field.
    */
-  getEstimatedElectricUseInputField(): Locator {
-    return this.estimatedElectricUseInput;
+  getEstimatedElectricUseOutputField(): Locator {
+    return this.estimatedElectricUseOutput;
   }
 }
