@@ -1,18 +1,17 @@
 import { test, expect } from '@playwright/test';
-import { EnergyCostCalculatorPage } from '../pages/EnergyCostCalculatorPage';
+import { RateCalculatorPage } from '../../pages/RateCalculatorPage'; // Adjust path based on your framework structure
 
-test.describe('Energy Cost Calculator Functionality', () => {
-  const ENERGY_CALCULATOR_URL = 'https://www.cpsenergy.com/content/corporate/en/my-home/savings-programs/energy-cost-calculator.html';
+test.describe('Rate Calculator Page Verification', () => {
+  test('should display the rate calculator section correctly', async ({ page }) => {
+    const rateCalculatorPage = new RateCalculatorPage(page);
 
-  test('MTX-4433: should display the rate calculator section', async ({ page }) => {
-    const calculatorPage = new EnergyCostCalculatorPage(page);
+    // Step 1: Navigate to the CPS Energy website page containing the rate calculator.
+    const url = 'https://www.cpsenergy.com/content/corporate/en/my-home/savings-programs/energy-cost-calculator.html';
+    await rateCalculatorPage.navigateTo(url);
 
-    // Step 1: Navigate to the Energy Cost Calculator page.
-    await calculatorPage.navigate(ENERGY_CALCULATOR_URL);
-
-    // Expected Result: The rate calculator section is displayed on the page.
-    // We assert the visibility of a key input field within the calculator as an indicator
-    // that the entire section is displayed.
-    await expect(calculatorPage.isEstimatedElectricUseFieldVisible()).toBeVisible();
+    // Expected Result: The rate calculator section is displayed correctly on the page.
+    // We assert the visibility of a key, prominent element within the calculator section
+    // to confirm the section itself is displayed.
+    await expect(rateCalculatorPage.getRateCalculatorSectionIndicator()).toBeVisible();
   });
 });
