@@ -1,39 +1,38 @@
 import { test, expect } from '@playwright/test';
-import { RateCalculatorPage } from '../../pages/RateCalculatorPage'; // Relative import
+import { RateCalculatorPage } from '../../pages/RateCalculatorPage';
 
-test.describe('Service Type Selection', () => {
-  let rateCalculatorPage: RateCalculatorPage;
+test.describe('Verify Service Type Selection - Electric Only', () => {
 
-  // A common pattern is to navigate to the page before each test.
-  // This ensures a clean state for every test scenario.
-  // test.beforeEach(async ({ page }) => {
-  //   await page.goto('/your-calculator-page-path'); // Replace with the actual URL segment
-  // });
+    test('should enable electric fields and disable gas fields when "Electric only" is selected', async ({ page }) => {
+        const rateCalculatorPage = new RateCalculatorPage(page);
 
-  test('Verify Service Type Selection - Electric Only', async ({ page }) => {
-    rateCalculatorPage = new RateCalculatorPage(page);
+        // Navigate to the Rate Calculator page if not already there.
+        // For this exercise, we assume the base URL is configured and the page is loaded.
+        // await page.goto('/rate-calculator'); // Example navigation
 
-    // Assume navigation to the base URL has occurred in a global setup or beforeEach.
-    // If not, uncomment and update the page.goto line above or here:
-    // await page.goto('YOUR_APP_BASE_URL/calculator');
+        // Step 1: Select 'Electric only' from the Service type options.
+        // Input Data: Service Type: Electric only
+        await rateCalculatorPage.selectServiceTypeElectricOnly();
 
-    // Step 1: Select 'Electric only' from the Service Type dropdown.
-    // Input Data: Service Type: Electric only
-    await rateCalculatorPage.selectElectricOnlyService();
+        // Expected Result: Electric Meter Read field is enabled; Gas Meter Read field is disabled or hidden.
+        await expect(await rateCalculatorPage.isCurrentMeterReadInputEnabled()).toBe(true);
+        await expect(await rateCalculatorPage.isEstimatedGasUseInputEnabled()).toBe(false);
 
-    // Expected Result: Electric Meter Read field is enabled; Gas Meter Read field is disabled or hidden.
-    await expect(rateCalculatorPage.getPreviousMeterReadInput()).toBeEnabled();
-    await expect(rateCalculatorPage.getEstimatedGasUseInput()).toBeDisabled();
+        // Step 2: Enter a value in the Electric Meter Read field.
+        // Input Data: Electric Meter Read: 500
+        await rateCalculatorPage.enterCurrentMeterRead('500');
 
-    // Step 2: Enter a value in the Electric Meter Read field and click Calculate.
-    // Input Data: Electric Meter Read: 500
-    await rateCalculatorPage.enterPreviousMeterRead('500');
-    await rateCalculatorPage.clickCalculate();
+        // Expected Result: Value is accepted in the field.
+        await expect(rateCalculatorPage.getCurrentMeterReadInputLocator()).toHaveValue('500');
 
-    // Expected Result: The calculated price for electric usage is displayed.
-    // TODO: Locator not found in catalog for the displayed calculated price.
-    // A proper assertion would require a locator for the element displaying the calculated result.
-    // Example: await expect(rateCalculatorPage.getCalculatedElectricPriceDisplay()).toBeVisible();
-    // Example: await expect(rateCalculatorPage.getCalculatedElectricPriceDisplay()).toHaveText('$XX.XX');
-  });
+        // Step 3: Click the Calculate button.
+        // Input Data: Click 'Calculate'
+        await rateCalculatorPage.clickCalculateButton();
+
+        // Expected Result: The calculated price for electric service is displayed.
+        // TODO: Assert calculated price is displayed. Locator for the calculated price display element
+        // was not found in the provided Locator Catalog. Add specific assertion once locator is available.
+        // Example: await expect(rateCalculatorPage.getCalculatedPriceDisplayElement()).toBeVisible();
+        // Example: await expect(rateCalculatorPage.getCalculatedPriceText()).toContain('123.45');
+    });
 });
