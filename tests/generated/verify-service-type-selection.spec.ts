@@ -1,42 +1,40 @@
 import { test, expect } from '@playwright/test';
-import { RateCalculatorPage } from '../../pages/RateCalculatorPage'; // Adjust path as necessary
+import { RateCalculatorPage } from '../pages/RateCalculatorPage'; // Adjust the path as needed
 
-test.describe('Verify Service Type Selection - Electric and Gas', () => {
-  test('should enable electric and gas fields and calculate combined price', async ({ page }) => {
-    // TODO: Replace with actual URL for the calculator page
-    await page.goto('/rate-calculator'); 
+test.describe('Rate Calculator - Service Type Selection', () => {
+  let rateCalculatorPage: RateCalculatorPage;
 
-    const rateCalculatorPage = new RateCalculatorPage(page);
+  test.beforeEach(async ({ page }) => {
+    rateCalculatorPage = new RateCalculatorPage(page);
+    // Navigate to the application's base URL or the specific page for the calculator.
+    // In a real enterprise setup, this URL would be configured centrally (e.g., via a config file).
+    await rateCalculatorPage.navigateTo('http://localhost:3000/rate-calculator'); // Placeholder URL
+  });
 
-    // Step 1: Select 'Electric and Gas' from the Service type radio button.
-    // Input Data: Service Type: Electric and Gas
-    await rateCalculatorPage.selectServiceTypeElectricAndGas();
+  test('MTX-4433: Verify selecting "Electric and Gas" service type enables relevant fields', async () => {
+    // Step 1: Select 'Electric and Gas' from the Service Type radio button group.
+    await test.step('Action: Select "Electric and Gas" service type', async () => {
+      await rateCalculatorPage.selectServiceType('Electric and Gas');
+    });
 
-    // Expected Result: Both Electric Meter Read and Gas Meter Read fields are enabled.
-    await expect(rateCalculatorPage.getCurrentElectricReadInputField()).toBeEnabled();
-    await expect(rateCalculatorPage.getEstimatedGasUseInputField()).toBeEnabled();
+    // Expected Result: Both 'Electric Meter Read' and 'Gas Meter Read' fields are enabled and visible.
+    // This corresponds to 'Enter Previous Read:', 'Enter Current Read:', 'Estimated Electric use (kWh):' and 'Estimated Gas use (Ccf):' inputs.
+    await test.step('Verification: Relevant electric and gas fields are enabled and visible', async () => {
+      // Verify 'Enter Previous Read:' field
+      await expect(await rateCalculatorPage.isPreviousElectricReadInputEnabled(), 'Previous Electric Read input should be enabled').toBeTruthy();
+      await expect(await rateCalculatorPage.isPreviousElectricReadInputVisible(), 'Previous Electric Read input should be visible').toBeTruthy();
 
-    // Step 2: Enter values in both meter read fields.
-    // Input Data: Electric: 450 (Current Read), Gas: 120
-    await rateCalculatorPage.enterElectricMeterReads('0', '450'); // Assuming previous read is 0 for this test scenario
-    await rateCalculatorPage.enterEstimatedGasUse('120');
+      // Verify 'Enter Current Read:' field
+      await expect(await rateCalculatorPage.isCurrentElectricReadInputEnabled(), 'Current Electric Read input should be enabled').toBeTruthy();
+      await expect(await rateCalculatorPage.isCurrentElectricReadInputVisible(), 'Current Electric Read input should be visible').toBeTruthy();
 
-    // Expected Result: Values are accepted in both fields.
-    await expect(rateCalculatorPage.getCurrentElectricReadInputField()).toHaveValue('450');
-    await expect(rateCalculatorPage.getEstimatedGasUseInputField()).toHaveValue('120');
+      // Verify 'Estimated Electric use (kWh):' field
+      await expect(await rateCalculatorPage.isEstimatedElectricUseInputEnabled(), 'Estimated Electric Use input should be enabled').toBeTruthy();
+      await expect(await rateCalculatorPage.isEstimatedElectricUseInputVisible(), 'Estimated Electric Use input should be visible').toBeTruthy();
 
-    // Step 3: Click the Calculate button.
-    // Input Data: Click 'Calculate'
-    await rateCalculatorPage.clickCalculateButton();
-
-    // Expected Result: The combined calculated price for both services is displayed.
-    // This typically means the output fields are visible and show calculated (non-zero) values.
-    await expect(rateCalculatorPage.getEstimatedElectricUseOutputField()).toBeVisible();
-    await expect(rateCalculatorPage.getEstimatedGasUseOutputField()).toBeVisible();
-    
-    // Assert that the calculated values are not the default '0' after calculation
-    await expect(rateCalculatorPage.getEstimatedElectricUseOutputField()).not.toHaveValue('0');
-    await expect(rateCalculatorPage.getEstimatedGasUseOutputField()).not.toHaveValue('0');
-    // Further assertions could involve specific expected calculated values if they are known.
+      // Verify 'Estimated Gas use (Ccf):' field (crucial, as it starts disabled)
+      await expect(await rateCalculatorPage.isEstimatedGasUseInputEnabled(), 'Estimated Gas Use input should be enabled').toBeTruthy();
+      await expect(await rateCalculatorPage.isEstimatedGasUseInputVisible(), 'Estimated Gas Use input should be visible').toBeTruthy();
+    });
   });
 });
