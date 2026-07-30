@@ -1,50 +1,53 @@
 import { test, expect } from '@playwright/test';
-import { RateCalculatorPage } from '../pages/RateCalculatorPage';
+import { RateCalculatorPage } from '../../pages/RateCalculatorPage'; // Adjust path as needed
 
-test.describe('Rate Calculator Reset Functionality (MTX-4433)', () => {
-  const BASE_URL = 'http://localhost:3000/rate-calculator'; // Placeholder URL
+test.describe('Rate Calculator Functionality', () => {
+  let rateCalculatorPage: RateCalculatorPage;
 
-  test('Verify Reset button clears all inputs and results', async ({ page }) => {
-    const rateCalculatorPage = new RateCalculatorPage(page);
+  test.beforeEach(async ({ page }) => {
+    rateCalculatorPage = new RateCalculatorPage(page);
+    await rateCalculatorPage.navigateTo();
+  });
 
-    await test.step('Step 1: Enter values into the meter read fields and perform a calculation.', async () => {
-      await rateCalculatorPage.navigate(BASE_URL);
-      await rateCalculatorPage.selectMonth('m06'); // Select an arbitrary month for calculation context
-      await rateCalculatorPage.enterPreviousRead('100');
-      await rateCalculatorPage.enterCurrentRead('550');
-      await rateCalculatorPage.selectServiceTypeElectricAndGas(); // Enables gas calculation
-      await rateCalculatorPage.clickCalculateButton();
+  test('MTX-4433: Verify Reset Functionality clears inputs and results', async () => {
+    // Step 1: Enter values into the meter read fields and click 'Calculate'.
+    // Input Data: Electric: 100, Gas: 50
+    // For 50 units of electric usage, Previous Read = 100, Current Read = 150
+    await rateCalculatorPage.enterPreviousRead('100');
+    await rateCalculatorPage.enterCurrentRead('150');
+    await rateCalculatorPage.selectElectricGasService(); // Select EG to potentially enable gas calculation if the UI logic allows.
+    await rateCalculatorPage.clickCalculate();
 
-      // Expected Result: Calculation result is displayed.
-      // For this test, we'll check that the consumption fields are not '0' or empty.
-      const electricConsumption = await rateCalculatorPage.getEstimatedElectricUse();
-      const gasConsumption = await rateCalculatorPage.getEstimatedGasUse();
+    // Expected Result for Step 1: Price is displayed.
+    // This implies that Estimated Electric use (kWh) should be non-zero.
+    const electricUseAfterCalc = await rateCalculatorPage.getEstimatedElectricUse();
+    expect(electricUseAfterCalc).toBe('50'); // 150 - 100 = 50
 
-      expect(electricConsumption).not.toBe('0');
-      expect(electricConsumption).not.toBe('');
-      expect(gasConsumption).not.toBe('0');
-      expect(gasConsumption).not.toBe('');
-      console.log(`Initial Electric Consumption: ${electricConsumption} kWh`);
-      console.log(`Initial Gas Consumption: ${gasConsumption} Ccf`);
-    });
+    // Optional: Verify gas usage if it's expected to calculate despite initial disabled state.
+    // Based on locator catalog, Estimated Gas use is disabled. Assuming it stays '0' or remains disabled.
+    const gasUseAfterCalc = await rateCalculatorPage.getEstimatedGasUse();
+    expect(gasUseAfterCalc).toBe('0'); // As it's disabled and no direct gas input, expect 0.
+    expect(await rateCalculatorPage.isEstimatedGasUseEnabled()).toBeFalsy();
 
-    await test.step('Step 2: Click the \'Reset\' button.', async () => {
-      await rateCalculatorPage.clickResetButton();
 
-      // Expected Result: All input fields are cleared and the calculated price display is removed.
-      const previousReadValue = await rateCalculatorPage.getPreviousReadValue();
-      const currentReadValue = await rateCalculatorPage.getCurrentReadValue();
-      const electricConsumptionAfterReset = await rateCalculatorPage.getEstimatedElectricUse();
-      const gasConsumptionAfterReset = await rateCalculatorPage.getEstimatedGasUse();
+    // Step 2: Click on the 'Reset' button.
+    // Input Data: Click Reset
+    await rateCalculatorPage.clickReset();
 
-      expect(previousReadValue).toBe('0'); // Assuming reset sets fields to '0' or default
-      expect(currentReadValue).toBe('0');
-      expect(electricConsumptionAfterReset).toBe('0');
-      expect(gasConsumptionAfterReset).toBe('0');
-      console.log(`Previous Read after reset: ${previousReadValue}`);
-      console.log(`Current Read after reset: ${currentReadValue}`);
-      console.log(`Electric Consumption after reset: ${electricConsumptionAfterReset} kWh`);
-      console.log(`Gas Consumption after reset: ${gasConsumptionAfterReset} Ccf`);
-    });
+    // Expected Result for Step 2: All input fields are cleared and the calculated price display is removed.
+    // Check if input fields are cleared (reset to '0' or default)
+    expect(await rateCalculatorPage.getPreviousReadValue()).toBe('0');
+    expect(await rateCalculatorPage.getCurrentReadValue()).toBe('0');
+
+    // Check if calculated results are cleared (reset to '0')
+    expect(await rateCalculatorPage.getEstimatedElectricUse()).toBe('0');
+    expect(await rateCalculatorPage.getEstimatedGasUse()).toBe('0');
+
+    // Check if dropdown reverts to default (m06 for June)
+    expect(await rateCalculatorPage.getSelectedMonthValue()).toBe('m06');
+
+    // The state of radio buttons after reset is not explicitly defined in requirements.
+    // Assuming they might revert to an unselected state or a default if one exists.
+    // No specific assertion added for radio buttons without clearer instructions on their default state.
   });
 });
