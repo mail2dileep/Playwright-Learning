@@ -1,44 +1,29 @@
 import { test, expect } from '@playwright/test';
-import { RateCalculatorPage } from '../../pages/RateCalculatorPage';
+import { CalculatorPage } from '../../pages/CalculatorPage'; // Relative import
 
-test.describe('Service Type Selection Functionality', () => {
-  let calculatorPage: RateCalculatorPage;
+test.describe('Verify Service Type Selection', () => {
 
-  test.beforeEach(async ({ page }) => {
-    calculatorPage = new RateCalculatorPage(page);
-    // Assume navigation to the calculator page is handled here
-    // For example: await page.goto('/rate-calculator'); 
-    // Or the test environment ensures the page is already open
-  });
+  test('should enable Electric and Gas fields when "Electric and Gas" service type is selected', async ({ page }) => {
+    // Assuming navigation to the calculator page is handled by a beforeEach or base URL configuration.
+    // For this example, we'll assume the page is already at the calculator URL.
+    // Example: await page.goto('/calculator');
 
-  test('MTX-4433: Verify selecting "Electric only" updates input fields correctly', async ({ page }) => {
-    test.info().annotations.push(
-      { type: 'Objective', description: 'Validate that selecting \'Electric only\' updates the input fields accordingly.' },
-      { type: 'Priority', description: 'High' }
-    );
+    const calculatorPage = new CalculatorPage(page);
 
-    // Step 1: Action - Select 'Electric only' service type
-    await test.step('Select \'Electric only\' from the Service Type options', async () => {
-      await calculatorPage.selectServiceTypeElectricOnly();
+    // Step 1: Select 'Electric and Gas' from the Service Type options.
+    await test.step('Select "Electric and Gas" service type', async () => {
+      await calculatorPage.selectServiceTypeElectricAndGas();
     });
 
-    // Expected Result: The 'Electric Meter Read' field is enabled/visible and 'Gas Meter Read' is disabled or hidden.
-    await test.step('Verify the state of electric and gas meter read fields', async () => {
-      // Check the 'Enter Previous Read:' field (part of electric meter read input)
-      await expect(calculatorPage.getPreviousReadField()).toBeEnabled();
-      await expect(calculatorPage.getPreviousReadField()).toBeVisible();
+    // Expected Result: Both 'Electric Meter Read' and 'Gas Meter Read' fields are enabled and visible.
+    // 'Electric Meter Read' maps to 'Enter Previous Read:' field
+    // 'Gas Meter Read' maps to 'Estimated Gas use (Ccf):' field (which was initially disabled)
+    await test.step('Verify "Enter Previous Read:" and "Estimated Gas use (Ccf):" fields are enabled and visible', async () => {
+      await expect(calculatorPage.enterPreviousReadField).toBeEnabled();
+      await expect(calculatorPage.enterPreviousReadField).toBeVisible();
 
-      // Check the 'Enter Current Read:' field (part of electric meter read input)
-      await expect(calculatorPage.getCurrentReadField()).toBeEnabled();
-      await expect(calculatorPage.getCurrentReadField()).toBeVisible();
-
-      // Check the 'Estimated Electric use (kWh):' field
-      await expect(calculatorPage.getEstimatedElectricUseField()).toBeEnabled();
-      await expect(calculatorPage.getEstimatedElectricUseField()).toBeVisible();
-
-      // Check the 'Estimated Gas use (Ccf):' field
-      await expect(calculatorPage.getEstimatedGasUseField()).toBeDisabled();
-      await expect(calculatorPage.getEstimatedGasUseField()).toBeVisible(); // It should be visible but disabled
+      await expect(calculatorPage.estimatedGasUseField).toBeEnabled();
+      await expect(calculatorPage.estimatedGasUseField).toBeVisible();
     });
   });
 });
