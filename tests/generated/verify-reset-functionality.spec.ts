@@ -1,53 +1,44 @@
 import { test, expect } from '@playwright/test';
-import { RateCalculatorPage } from '../../pages/RateCalculatorPage'; // Adjust path as needed
+import { CalculatorPage } from '../../pages/CalculatorPage';
 
-test.describe('Rate Calculator Functionality', () => {
-  let rateCalculatorPage: RateCalculatorPage;
+test.describe('Calculator Functionality', () => {
+  let calculatorPage: CalculatorPage;
 
   test.beforeEach(async ({ page }) => {
-    rateCalculatorPage = new RateCalculatorPage(page);
-    await rateCalculatorPage.navigateTo();
+    calculatorPage = new CalculatorPage(page);
+    // Placeholder URL as no specific application URL was provided in the prompt.
+    // In a real framework, this might be handled by baseURL in playwright.config.ts
+    // or a navigation method within a BasePage/PageFixture.
+    await page.goto('http://localhost:3000/calculator'); 
   });
 
-  test('MTX-4433: Verify Reset Functionality clears inputs and results', async () => {
-    // Step 1: Enter values into the meter read fields and click 'Calculate'.
-    // Input Data: Electric: 100, Gas: 50
-    // For 50 units of electric usage, Previous Read = 100, Current Read = 150
-    await rateCalculatorPage.enterPreviousRead('100');
-    await rateCalculatorPage.enterCurrentRead('150');
-    await rateCalculatorPage.selectElectricGasService(); // Select EG to potentially enable gas calculation if the UI logic allows.
-    await rateCalculatorPage.clickCalculate();
+  test('Verify Reset Functionality clears all inputs and results', async ({ page }) => {
+    // Step 1: Enter values into the meter read fields and perform a calculation.
+    // Input Data: Electric: 300, Gas: 50
+    await test.step('Enter meter reads and calculate rates', async () => {
+      await calculatorPage.selectServiceType('ElectricAndGas');
+      await calculatorPage.enterPreviousMeterRead('0');
+      await calculatorPage.enterCurrentMeterRead('300'); 
+      await calculatorPage.calculateRates();
 
-    // Expected Result for Step 1: Price is displayed.
-    // This implies that Estimated Electric use (kWh) should be non-zero.
-    const electricUseAfterCalc = await rateCalculatorPage.getEstimatedElectricUse();
-    expect(electricUseAfterCalc).toBe('50'); // 150 - 100 = 50
-
-    // Optional: Verify gas usage if it's expected to calculate despite initial disabled state.
-    // Based on locator catalog, Estimated Gas use is disabled. Assuming it stays '0' or remains disabled.
-    const gasUseAfterCalc = await rateCalculatorPage.getEstimatedGasUse();
-    expect(gasUseAfterCalc).toBe('0'); // As it's disabled and no direct gas input, expect 0.
-    expect(await rateCalculatorPage.isEstimatedGasUseEnabled()).toBeFalsy();
-
+      // Expected Result: Calculation result is displayed.
+      // Assert that the estimated electric and gas use are now the expected values.
+      // Assuming the application calculates 300 kWh for electric and 50 Ccf for gas with these inputs.
+      await expect(calculatorPage.getEstimatedElectricUseValue()).toEqual('300');
+      await expect(calculatorPage.getEstimatedGasUseValue()).toEqual('50'); 
+    });
 
     // Step 2: Click on the 'Reset' button.
-    // Input Data: Click Reset
-    await rateCalculatorPage.clickReset();
+    await test.step('Click Reset button and verify fields are cleared', async () => {
+      await calculatorPage.resetCalculator();
 
-    // Expected Result for Step 2: All input fields are cleared and the calculated price display is removed.
-    // Check if input fields are cleared (reset to '0' or default)
-    expect(await rateCalculatorPage.getPreviousReadValue()).toBe('0');
-    expect(await rateCalculatorPage.getCurrentReadValue()).toBe('0');
-
-    // Check if calculated results are cleared (reset to '0')
-    expect(await rateCalculatorPage.getEstimatedElectricUse()).toBe('0');
-    expect(await rateCalculatorPage.getEstimatedGasUse()).toBe('0');
-
-    // Check if dropdown reverts to default (m06 for June)
-    expect(await rateCalculatorPage.getSelectedMonthValue()).toBe('m06');
-
-    // The state of radio buttons after reset is not explicitly defined in requirements.
-    // Assuming they might revert to an unselected state or a default if one exists.
-    // No specific assertion added for radio buttons without clearer instructions on their default state.
+      // Expected Result: All input fields are cleared and the displayed price is removed or reset to zero.
+      await expect(calculatorPage.getPreviousMeterReadValue()).toEqual('0');
+      await expect(calculatorPage.getCurrentMeterReadValue()).toEqual('0');
+      await expect(calculatorPage.getEstimatedElectricUseValue()).toEqual('0');
+      await expect(calculatorPage.getEstimatedGasUseValue()).toEqual('0');
+      // Verify default month selection is restored, 'm06' (June) is the default value from the catalog.
+      await expect(calculatorPage.getSelectedMonthValue()).toEqual('m06'); 
+    });
   });
 });
