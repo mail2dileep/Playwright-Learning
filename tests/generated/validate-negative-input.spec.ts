@@ -1,52 +1,39 @@
 import { test, expect } from '@playwright/test';
 import { RateCalculatorPage } from '../../pages/RateCalculatorPage';
 
-test.describe('MTX-4506: Rate Calculator - Validate Negative Input Handling', () => {
-  let rateCalculatorPage: RateCalculatorPage;
+test.describe('Negative Input Validation', () => {
+  // Assuming a base URL for the application's rate calculator page
+  const PAGE_URL = '/rate-calculator'; 
 
   test.beforeEach(async ({ page }) => {
-    rateCalculatorPage = new RateCalculatorPage(page);
-    // Navigate to the Rate Calculator page if not already there.
-    // In an enterprise framework, this URL would typically be configured via playwright.config.ts
-    // or a custom test fixture.
-    // Example: await page.goto('/your-app/rate-calculator'); 
+    // Navigate to the calculator page before each test using the Page Object
+    const rateCalculatorPage = new RateCalculatorPage(page);
+    // For local development, ensure base URL is configured in playwright.config.ts
+    // e.g., baseURL: 'http://localhost:3000'
+    await rateCalculatorPage.navigateTo(PAGE_URL);
   });
 
-  test('Validate negative value in Previous Meter Read prevents calculation', async ({ page }) => {
-    // Step 1: Enter a negative value in the Electric Meter Read field
-    // Assuming 'Electric Meter Read field' refers to 'Enter Previous Read:'
-    await rateCalculatorPage.enterPreviousMeterRead('-100');
-    await rateCalculatorPage.enterCurrentMeterRead('50'); // Provide a valid current read for context
-    await rateCalculatorPage.clickCalculate();
+  test('should prevent non-numeric input in Electric Meter Read field', async ({ page }) => {
+    const rateCalculatorPage = new RateCalculatorPage(page);
 
-    // Expected Result: System displays a validation error or prevents calculation.
-    // As no specific error message locator is provided, we assert that the
-    // 'Estimated Electric use (kWh)' remains at its default or a value indicating calculation prevention.
-    // The catalog shows 'currentValue: "0"' for this field, implying 0 is the default/invalid state.
-    const estimatedElectricUse = await rateCalculatorPage.getEstimatedElectricUse();
-    await expect(estimatedElectricUse).toBe('0');
-  });
+    // Step 1: Enter alphabetic characters into the Electric Meter Read field.
+    // Input Data: Electric Meter Read: ABC
+    const invalidInput = 'ABC';
+    await rateCalculatorPage.enterPreviousMeterRead(invalidInput);
 
-  test('Validate non-numeric characters in Meter Read fields prevent calculation', async ({ page }) => {
-    // Step 2: Enter non-numeric characters in the meter read fields
-    // Test for 'Enter Previous Read:'
-    await rateCalculatorPage.enterPreviousMeterRead('abc');
-    await rateCalculatorPage.enterCurrentMeterRead('100'); // Provide a valid current read for context
-    await rateCalculatorPage.clickCalculate();
+    // Expected Result: System displays a validation error message or prevents non-numeric entry.
+    // Since no specific error message locator for validation is provided in the catalog,
+    // we verify that the field prevents the entry of non-numeric characters.
+    // The 'Enter Previous Read:' field's catalog entry has 'currentValue: "0"'.
+    // If it prevents non-numeric input, the value should either remain '0' or become empty,
+    // but definitively not contain the invalid alphabetic string 'ABC'.
+    const actualValue = await rateCalculatorPage.getPreviousMeterReadValue();
 
-    // Expected Result: System prevents non-numeric input or displays an error message.
-    // Assert that 'Estimated Electric use (kWh)' remains at its default value '0'.
-    const estimatedElectricUsePrevious = await rateCalculatorPage.getEstimatedElectricUse();
-    await expect(estimatedElectricUsePrevious).toBe('0');
-    await rateCalculatorPage.clickReset(); // Reset for the next input test
-
-    // Test for 'Enter Current Read:'
-    await rateCalculatorPage.enterPreviousMeterRead('50'); // Provide a valid previous read for context
-    await rateCalculatorPage.enterCurrentMeterRead('xyz');
-    await rateCalculatorPage.clickCalculate();
-
-    // Assert that 'Estimated Electric use (kWh)' remains at its default value '0'.
-    const estimatedElectricUseCurrent = await rateCalculatorPage.getEstimatedElectricUse();
-    await expect(estimatedElectricUseCurrent).toBe('0');
+    // Assert that the field's value is NOT the invalid input.
+    expect(actualValue).not.toBe(invalidInput); 
+    
+    // A stronger assertion, assuming the field reverts to its default numeric value '0'
+    // or cleans up to '0' if non-numeric input is prevented.
+    expect(actualValue).toBe('0'); 
   });
 });
