@@ -1,1 +1,39 @@
-import { test, expect } from '@playwright/test';\nimport { RateCalculatorPage } from '../../pages/RateCalculatorPage'; // Adjust the import path as necessary\n\ntest.describe('MTX-4433: Verify Service Type Selection', () => {\n    let rateCalculatorPage: RateCalculatorPage;\n\n    test.beforeEach(async ({ page }) => {\n        rateCalculatorPage = new RateCalculatorPage(page);\n        // Navigate to the Rate Calculator page. Replace with your application's actual URL/path.\n        await rateCalculatorPage.navigate('/rate-calculator');\n    });\n\n    test('TC_002 - Verify Service Type Selection - Electric Only', async () => {\n        // Step 1: Action - Select 'Electric only' from the Service Type options.\n        // This corresponds to clicking the radio button with ID 'e'.\n        await rateCalculatorPage.selectElectricOnlyService();\n\n        // Expected Result: The 'Electric Meter Read' field is visible.\n        // Verifying visibility of 'Enter Previous Read:' as a key electric meter input field.\n        await expect(await rateCalculatorPage.isPreviousReadFieldVisible()).toBe(true);\n        // Also verifying visibility of 'Estimated Electric use (kWh):' as an associated display field.\n        await expect(await rateCalculatorPage.isEstimatedElectricUseFieldVisible()).toBe(true);\n\n        // Expected Result: The 'Gas Meter Read' field is hidden or disabled.\n        // Based on the Locator Catalog, 'Estimated Gas use (Ccf):' is initially disabled (disabled: true).\n        // We verify that it remains disabled after selecting 'Electric only'.\n        await expect(await rateCalculatorPage.isEstimatedGasUseFieldDisabled()).toBe(true);\n        // If the field is expected to be entirely hidden (not just disabled), you could add this assertion:\n        // await expect(await rateCalculatorPage.isEstimatedGasUseFieldVisible()).toBe(false);\n    });\n});
+import { test, expect } from '@playwright/test';
+import { RateCalculatorPage } from '../../pages/RateCalculatorPage';
+
+test.describe('Rate Calculator Functionality', () => {
+  test('Verify Service Type Selection - Electric Only', async ({ page }) => {
+    // Assuming a base URL is configured in playwright.config.ts
+    // For example: baseURL: 'http://localhost:3000/'
+    // Navigate to the calculator page or the specific path where the component is rendered
+    await page.goto('/calculator'); 
+
+    const rateCalculatorPage = new RateCalculatorPage(page);
+
+    // Step 1: Select 'Electric only' from the Service Type and verify field visibility.
+    // Expected: Only electric meter read fields are visible; gas meter read field is hidden.
+    await test.step("Select 'Electric only' service type and verify field visibility", async () => {
+      await rateCalculatorPage.selectServiceTypeElectricOnly();
+
+      await expect(rateCalculatorPage.getPreviousElectricReadLocator()).toBeVisible();
+      await expect(rateCalculatorPage.getCurrentElectricReadLocator()).toBeVisible();
+      await expect(rateCalculatorPage.getEstimatedGasUseCcfLocator()).toBeHidden();
+    });
+
+    // Step 2: Enter a valid numeric value in the Electric Meter Read fields and click Calculate.
+    // Expected: The calculated price for electric usage is displayed.
+    await test.step('Enter electric meter read values and calculate', async () => {
+      // Assuming previous read starts at 0, and current read is 500 for a usage of 500.
+      await rateCalculatorPage.enterPreviousElectricRead('0');
+      await rateCalculatorPage.enterCurrentElectricRead('500');
+      await rateCalculatorPage.clickCalculate();
+
+      const calculatedElectricUsage = await rateCalculatorPage.getEstimatedElectricUseKwhValue();
+
+      // Verify that the estimated electric use output field is visible and contains a non-default value.
+      await expect(rateCalculatorPage.getEstimatedElectricUseKwhLocator()).toBeVisible();
+      await expect(calculatedElectricUsage).not.toBe('0'); // Expect a calculated value, not the default '0'
+      await expect(calculatedElectricUsage).toMatch(/^\d+$/); // Ensure the value is a number
+    });
+  });
+});
