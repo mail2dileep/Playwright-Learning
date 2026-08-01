@@ -1,121 +1,121 @@
-import { Page, Locator } from '@playwright/test';
+import { Page, Locator } from "@playwright/test";
 
 export class EnergyCostCalculatorPage {
-  private readonly page: Page;
-  private readonly calculatorSection: Locator;
-  private readonly monthDropdown: Locator;
+  private readonly monthSelect: Locator;
   private readonly previousReadInput: Locator;
   private readonly currentReadInput: Locator;
   private readonly estimatedElectricUseInput: Locator;
   private readonly estimatedGasUseInput: Locator;
-  private readonly electricServiceRadio: Locator;
-  private readonly electricGasServiceRadio: Locator;
-  private readonly calculateButton: Locator;
+  private readonly electricServiceTypeRadio: Locator;
+  private readonly electricAndGasServiceTypeRadio: Locator;
   private readonly resetButton: Locator;
-  private readonly howToReadYourBillButton: Locator;
-  private readonly howToFindUsageButton: Locator;
+  private readonly calculateButton: Locator;
+  private readonly pageUrl: string = "https://www.cpsenergy.com/content/corporate/en/my-home/savings-programs/energy-cost-calculator.html";
 
-  constructor(page: Page) {
-    this.page = page;
-    this.calculatorSection = page.locator('#calculator_current');
-    this.monthDropdown = page.getByLabel('Month');
-    this.previousReadInput = page.getByLabel('Enter Previous Read:');
-    this.currentReadInput = page.getByLabel('Enter Current Read:');
-    this.estimatedElectricUseInput = page.getByLabel('Estimated Electric use (kWh):');
-    this.estimatedGasUseInput = page.getByLabel('Estimated Gas use (Ccf):');
-    this.electricServiceRadio = page.locator('#e');
-    this.electricGasServiceRadio = page.locator('#eg');
-    this.calculateButton = page.locator('#validateMoveInBtn');
-    this.resetButton = page.locator('#rateCalCancelBtn');
-    this.howToReadYourBillButton = page.locator('#howToReadYourBillBtn');
-    this.howToFindUsageButton = page.locator('#howToFindUsageBtn');
+  constructor(private page: Page) {
+    this.monthSelect = page.getByLabel("Month");
+    this.previousReadInput = page.getByLabel("Enter Previous Read:");
+    this.currentReadInput = page.getByLabel("Enter Current Read:");
+    this.estimatedElectricUseInput = page.getByLabel("Estimated Electric use (kWh):");
+    this.estimatedGasUseInput = page.getByLabel("Estimated Gas use (Ccf):");
+    this.electricServiceTypeRadio = page.locator("#e");
+    this.electricAndGasServiceTypeRadio = page.locator("#eg");
+    this.resetButton = page.locator("#rateCalCancelBtn");
+    this.calculateButton = page.locator("#validateMoveInBtn");
   }
 
-  async navigate(url: string): Promise<void> {
-    await this.page.goto(url);
+  /**
+   * Navigates to the Energy Cost Calculator page.
+   */
+  async navigateTo(): Promise<void> {
+    await this.page.goto(this.pageUrl);
   }
 
-  async isCalculatorSectionVisible(): Promise<Locator> {
-    return this.calculatorSection;
+  /**
+   * Checks if the rate calculator section is visible by verifying a key element's visibility.
+   * @returns A promise that resolves to true if visible, false otherwise.
+   */
+  async isRateCalculatorSectionVisible(): Promise<boolean> {
+    return await this.monthSelect.isVisible();
   }
 
-  async selectMonth(monthValue: string): Promise<void> {
-    await this.monthDropdown.selectOption(monthValue);
+  /**
+   * Retrieves the currently selected month's value from the dropdown.
+   * @returns A promise that resolves to the selected month's value.
+   */
+  async getSelectedMonthValue(): Promise<string | null> {
+    return await this.monthSelect.inputValue();
   }
 
-  async enterPreviousRead(read: string): Promise<void> {
-    await this.previousReadInput.fill(read);
-  }
-
-  async enterCurrentRead(read: string): Promise<void> {
-    await this.currentReadInput.fill(read);
-  }
-
-  async selectElectricServiceType(): Promise<void> {
-    await this.electricServiceRadio.check();
-  }
-
-  async selectElectricAndGasServiceType(): Promise<void> {
-    await this.electricGasServiceRadio.check();
-  }
-
-  async clickCalculateButton(): Promise<void> {
-    await this.calculateButton.click();
-  }
-
-  async clickResetButton(): Promise<void> {
-    await this.resetButton.click();
-  }
-
-  async getSelectedMonth(): Promise<string> {
-    return this.monthDropdown.inputValue();
-  }
-
+  /**
+   * Retrieves the value from the 'Previous Read' input field.
+   * @returns A promise that resolves to the previous read value.
+   */
   async getPreviousReadValue(): Promise<string> {
-    return this.previousReadInput.inputValue();
+    return await this.previousReadInput.inputValue();
   }
 
+  /**
+   * Retrieves the value from the 'Current Read' input field.
+   * @returns A promise that resolves to the current read value.
+   */
   async getCurrentReadValue(): Promise<string> {
-    return this.currentReadInput.inputValue();
+    return await this.currentReadInput.inputValue();
   }
 
-  async getEstimatedElectricUse(): Promise<string> {
-    return this.estimatedElectricUseInput.inputValue();
+  /**
+   * Retrieves the value from the 'Estimated Electric use (kWh)' input field.
+   * @returns A promise that resolves to the estimated electric use value.
+   */
+  async getEstimatedElectricUseValue(): Promise<string> {
+    return await this.estimatedElectricUseInput.inputValue();
   }
 
-  async getEstimatedGasUse(): Promise<string> {
-    return this.estimatedGasUseInput.inputValue();
+  /**
+   * Retrieves the value from the 'Estimated Gas use (Ccf)' input field.
+   * @returns A promise that resolves to the estimated gas use value.
+   */
+  async getEstimatedGasUseValue(): Promise<string> {
+    return await this.estimatedGasUseInput.inputValue();
   }
 
+  /**
+   * Checks if the 'Estimated Gas use (Ccf)' field is disabled.
+   * @returns A promise that resolves to true if disabled, false otherwise.
+   */
+  async isEstimatedGasUseFieldDisabled(): Promise<boolean> {
+    return await this.estimatedGasUseInput.isDisabled();
+  }
+
+  /**
+   * Checks if the 'Electric' service type radio button is selected.
+   * @returns A promise that resolves to true if selected, false otherwise.
+   */
   async isElectricServiceTypeSelected(): Promise<boolean> {
-    return this.electricServiceRadio.isChecked();
+    return await this.electricServiceTypeRadio.isChecked();
   }
 
+  /**
+   * Checks if the 'Electric & Gas' service type radio button is selected.
+   * @returns A promise that resolves to true if selected, false otherwise.
+   */
   async isElectricAndGasServiceTypeSelected(): Promise<boolean> {
-    return this.electricGasServiceRadio.isChecked();
+    return await this.electricAndGasServiceTypeRadio.isChecked();
   }
 
-  async isEstimatedGasUseFieldEnabled(): Promise<boolean> {
-      return this.estimatedGasUseInput.isEnabled();
+  /**
+   * Checks if the 'Reset' button is visible.
+   * @returns A promise that resolves to true if visible, false otherwise.
+   */
+  async isResetButtonVisible(): Promise<boolean> {
+    return await this.resetButton.isVisible();
   }
 
-  async getEstimatedGasUseFieldLocator(): Promise<Locator> {
-      return this.estimatedGasUseInput;
-  }
-
-  async getMonthDropdownLocator(): Promise<Locator> {
-      return this.monthDropdown;
-  }
-
-  async getPreviousReadInputLocator(): Promise<Locator> {
-      return this.previousReadInput;
-  }
-
-  async getCurrentReadInputLocator(): Promise<Locator> {
-      return this.currentReadInput;
-  }
-
-  async getEstimatedElectricUseInputLocator(): Promise<Locator> {
-      return this.estimatedElectricUseInput;
+  /**
+   * Checks if the 'Calculate' button is visible.
+   * @returns A promise that resolves to true if visible, false otherwise.
+   */
+  async isCalculateButtonVisible(): Promise<boolean> {
+    return await this.calculateButton.isVisible();
   }
 }
