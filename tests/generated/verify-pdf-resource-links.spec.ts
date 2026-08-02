@@ -1,50 +1,41 @@
 import { test, expect, Page } from '@playwright/test';
-import { CalculatorPage } from '../../pages/CalculatorPage'; // Adjust path as necessary
+import { PdfResourcesPage } from '../../pages/PdfResourcesPage';
 
-test.describe('PDF Resource Link Validation', () => {
-  let calculatorPage: CalculatorPage;
-  let page: Page;
+test.describe('PDF Resource Links Verification', () => {
 
-  test.beforeEach(async ({ browser }) => {
-    // It's good practice to navigate to the page under test first.
-    // Assuming a base URL is configured in playwright.config.ts
-    // and the calculator page is at the root or a known path.
-    page = await browser.newPage();
-    await page.goto('/'); // Navigate to the base URL or specific page path
-    calculatorPage = new CalculatorPage(page);
-  });
+  // Pre-condition: Assuming the test starts on the page where these buttons are visible.
+  // If navigation is required, add a page.goto() here or in a beforeEach hook.
+  // For example: test.beforeEach(async ({ page }) => { await page.goto('YOUR_APPLICATION_URL_HERE'); });
 
-  test.afterEach(async () => {
-    await page.close();
-  });
+  test('should validate 'How to read your bill' and 'How to find Usage' links open documents', async ({ page }) => {
+    const pdfResourcesPage = new PdfResourcesPage(page);
 
-  test('should open corresponding PDF documents successfully', async () => {
     // Step 1: Click on the 'How to read your bill' link.
-    // Expected Result: The corresponding PDF document opens in a new tab or downloads successfully.
-    // We expect a new page (popup) to open for the PDF document.
-    const [howToReadBillPage] = await Promise.all([
-      page.waitForEvent('popup'), // Waits for a new tab/window to open
-      calculatorPage.clickHowToReadYourBill(),
+    // Expected Result: The corresponding PDF document opens in a new tab or downloads.
+    // We use waitForEvent('popup') to detect a new tab opening, which is common for PDF links.
+    // If it triggers a direct download without opening a new tab, page.waitForEvent('download') would be used.
+    const [readBillPopup] = await Promise.all([
+      page.waitForEvent('popup', { timeout: 10000 }), // Wait for a new tab/window to open (popup)
+      pdfResourcesPage.clickHowToReadYourBillLink() // Click the link via Page Object method
     ]);
-    await expect(howToReadBillPage).toBeDefined();
-    // Further assertions could be added here, e.g., checking the URL of the new page
-    // await expect(howToReadBillPage).toHaveURL(/.*\.pdf/);
-    // Close the opened PDF tab to clean up and avoid interference with subsequent actions
-    await howToReadBillPage.close();
+
+    // Assert that a new tab/window (popup) was indeed opened.
+    expect(readBillPopup, 'Expected a new tab/window to open for "How to read your bill"').toBeDefined();
+    // Further assertions could be added here if the PDF URL pattern is known,
+    // e.g., expect(readBillPopup.url()).toContain('.pdf');
+    await readBillPopup.close(); // Close the popup for test cleanup
 
     // Step 2: Click on the 'How to find Usage' link.
-    // Expected Result: The corresponding PDF document opens in a new tab or downloads successfully.
-    const [howToFindUsagePage] = await Promise.all([
-      page.waitForEvent('popup'), // Waits for a new tab/window to open
-      calculatorPage.clickHowToFindUsage(),
+    // Expected Result: The corresponding PDF document opens in a new tab or downloads.
+    const [findUsagePopup] = await Promise.all([
+      page.waitForEvent('popup', { timeout: 10000 }), // Wait for a new tab/window to open (popup)
+      pdfResourcesPage.clickHowToFindUsageLink() // Click the link via Page Object method
     ]);
-    await expect(howToFindUsagePage).toBeDefined();
-    // Further assertions could be added here, e.g., checking the URL of the new page
-    // await expect(howToFindUsagePage).toHaveURL(/.*\.pdf/);
-    await howToFindUsagePage.close();
 
-    // Note: If the expected behavior is a download instead of opening in a new tab,
-    // 'page.waitForEvent("download")' should be used instead of 'page.waitForEvent("popup")'.
-    // Verification for downloads would involve checking the downloaded file's name and potentially content.
+    // Assert that a new tab/window (popup) was indeed opened.
+    expect(findUsagePopup, 'Expected a new tab/window to open for "How to find Usage"').toBeDefined();
+    // Further assertions could be added here if the PDF URL pattern is known.
+    // e.g., expect(findUsagePopup.url()).toContain('.pdf');
+    await findUsagePopup.close(); // Close the popup for test cleanup
   });
 });
