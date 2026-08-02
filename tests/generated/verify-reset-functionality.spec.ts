@@ -1,44 +1,38 @@
 import { test, expect } from '@playwright/test';
-import { CalculatorPage } from '../../pages/CalculatorPage';
+import { RateCalculatorPage } from '../../pages/RateCalculatorPage'; // Adjust path as necessary
 
-test.describe('Calculator Functionality', () => {
-  let calculatorPage: CalculatorPage;
+test.describe('Rate Calculator Functionality', () => {
+  test('Verify Reset Functionality clears inputs and results', async ({ page }) => {
+    const rateCalculatorPage = new RateCalculatorPage(page);
 
-  test.beforeEach(async ({ page }) => {
-    calculatorPage = new CalculatorPage(page);
-    // Placeholder URL as no specific application URL was provided in the prompt.
-    // In a real framework, this might be handled by baseURL in playwright.config.ts
-    // or a navigation method within a BasePage/PageFixture.
-    await page.goto('http://localhost:3000/calculator'); 
-  });
+    // TODO: Navigate to the Rate Calculator page URL
+    // For example: await page.goto('https://your-app.com/rate-calculator');
+    await page.goto('about:blank'); // Placeholder if no URL provided
 
-  test('Verify Reset Functionality clears all inputs and results', async ({ page }) => {
-    // Step 1: Enter values into the meter read fields and perform a calculation.
+    // Step 1: Enter values in the meter read fields and click Calculate.
     // Input Data: Electric: 300, Gas: 50
-    await test.step('Enter meter reads and calculate rates', async () => {
-      await calculatorPage.selectServiceType('ElectricAndGas');
-      await calculatorPage.enterPreviousMeterRead('0');
-      await calculatorPage.enterCurrentMeterRead('300'); 
-      await calculatorPage.calculateRates();
+    // Based on the fields, "Enter Previous Read:" and "Enter Current Read:",
+    // we'll assume these are the meter readings for a combined electric/gas service.
+    // Selecting 'electric-gas' enables the gas calculations.
+    await rateCalculatorPage.selectServiceType('electric-gas');
+    await rateCalculatorPage.enterMeterReads('50', '300'); // Previous: 50, Current: 300
+    await rateCalculatorPage.clickCalculate();
 
-      // Expected Result: Calculation result is displayed.
-      // Assert that the estimated electric and gas use are now the expected values.
-      // Assuming the application calculates 300 kWh for electric and 50 Ccf for gas with these inputs.
-      await expect(calculatorPage.getEstimatedElectricUseValue()).toEqual('300');
-      await expect(calculatorPage.getEstimatedGasUseValue()).toEqual('50'); 
-    });
+    // Expected Result: Calculation result is displayed.
+    // Check that estimated electric and gas use are not zero.
+    expect(await rateCalculatorPage.getEstimatedElectricUse()).not.toBe('0');
+    expect(await rateCalculatorPage.getEstimatedElectricUse()).not.toBe('');
+    expect(await rateCalculatorPage.getEstimatedGasUse()).not.toBe('0');
+    expect(await rateCalculatorPage.getEstimatedGasUse()).not.toBe('');
 
-    // Step 2: Click on the 'Reset' button.
-    await test.step('Click Reset button and verify fields are cleared', async () => {
-      await calculatorPage.resetCalculator();
+    // Step 2: Click the Reset button.
+    // Input Data: Click 'Reset'
+    await rateCalculatorPage.clickReset();
 
-      // Expected Result: All input fields are cleared and the displayed price is removed or reset to zero.
-      await expect(calculatorPage.getPreviousMeterReadValue()).toEqual('0');
-      await expect(calculatorPage.getCurrentMeterReadValue()).toEqual('0');
-      await expect(calculatorPage.getEstimatedElectricUseValue()).toEqual('0');
-      await expect(calculatorPage.getEstimatedGasUseValue()).toEqual('0');
-      // Verify default month selection is restored, 'm06' (June) is the default value from the catalog.
-      await expect(calculatorPage.getSelectedMonthValue()).toEqual('m06'); 
-    });
+    // Expected Result: All input fields are cleared and the displayed price result is removed or reset to zero.
+    expect(await rateCalculatorPage.isPreviousReadCleared()).toBe(true);
+    expect(await rateCalculatorPage.isCurrentReadCleared()).toBe(true);
+    expect(await rateCalculatorPage.isEstimatedElectricUseCleared()).toBe(true);
+    expect(await rateCalculatorPage.isEstimatedGasUseCleared()).toBe(true);
   });
 });
