@@ -1,98 +1,131 @@
-import { Page, Locator } from '@playwright/test';
+import { Page, Locator } from "@playwright/test";
 
 export class CalculatorPage {
   private readonly page: Page;
-
-  // Locators
-  private readonly previousMeterReadField: Locator;
-  private readonly currentMeterReadField: Locator;
+  private readonly electricAndGasServiceRadio: Locator;
+  private readonly previousElectricReadField: Locator;
+  private readonly currentElectricReadField: Locator;
+  private readonly calculateButton: Locator;
   private readonly estimatedElectricUseField: Locator;
   private readonly estimatedGasUseField: Locator;
-  private readonly electricOnlyServiceTypeRadio: Locator;
-  private readonly electricAndGasServiceTypeRadio: Locator;
-  private readonly calculateButton: Locator;
-  private readonly monthSelect: Locator;
 
   constructor(page: Page) {
     this.page = page;
-    this.previousMeterReadField = page.getByLabel('Enter Previous Read:');
-    this.currentMeterReadField = page.getByLabel('Enter Current Read:');
-    this.estimatedElectricUseField = page.getByLabel('Estimated Electric use (kWh):');
-    this.estimatedGasUseField = page.getByLabel('Estimated Gas use (Ccf):');
-    this.electricOnlyServiceTypeRadio = page.locator('#e');
-    this.electricAndGasServiceTypeRadio = page.locator('#eg');
+    this.electricAndGasServiceRadio = page.locator('#eg'); // For 'Electric and Gas' service type
+    this.previousElectricReadField = page.getByLabel('Enter Previous Read:');
+    this.currentElectricReadField = page.getByLabel('Enter Current Read:');
     this.calculateButton = page.locator('#validateMoveInBtn');
-    this.monthSelect = page.getByLabel('Month');
+    this.estimatedElectricUseField = page.getByLabel('Estimated Electric use (kWh):');
+    this.estimatedGasUseField = page.getByLabel('Estimated Gas use (Ccf):'); // This is an estimated use output, not an input for meter read.
   }
 
   /**
-   * Selects the 'Electric only' service type radio button.
+   * Navigates to the calculator page. (Placeholder, as no URL was provided)
+   * @param url The URL of the calculator page.
    */
-  async selectElectricOnlyService(): Promise<void> {
-    await this.electricOnlyServiceTypeRadio.click();
+  async navigateTo(url: string): Promise<void> {
+    await this.page.goto(url);
   }
 
   /**
-   * Enters the previous meter read value.
-   * @param value The previous meter read value as a string.
+   * Selects the 'Electric and Gas' service type radio button.
    */
-  async enterPreviousRead(value: string): Promise<void> {
-    await this.previousMeterReadField.fill(value);
+  async selectElectricAndGasService(): Promise<void> {
+    await this.electricAndGasServiceRadio.click();
   }
 
   /**
-   * Enters the current meter read value.
-   * @param value The current meter read value as a string.
+   * Enters the previous electric meter read value.
+   * @param read The previous electric meter read value.
    */
-  async enterCurrentRead(value: string): Promise<void> {
-    await this.currentMeterReadField.fill(value);
+  async enterPreviousElectricRead(read: string): Promise<void> {
+    await this.previousElectricReadField.fill(read);
   }
 
   /**
-   * Clicks the 'Calculate' button.
+   * Enters the current electric meter read value.
+   * @param read The current electric meter read value.
+   */
+  async enterCurrentElectricRead(read: string): Promise<void> {
+    await this.currentElectricReadField.fill(read);
+  }
+
+  /**
+   * Clicks the 'Calculate' button to compute results.
    */
   async clickCalculateButton(): Promise<void> {
     await this.calculateButton.click();
   }
 
   /**
-   * Retrieves the locator for the 'Estimated Gas use (Ccf):' field.
-   * This method is exposed for test layer assertions on the locator's state (e.g., disabled).
-   * @returns The Playwright Locator for the estimated gas use field.
+   * Checks if the previous electric read field is visible.
    */
-  getEstimatedGasUseFieldLocator(): Locator {
-    return this.estimatedGasUseField;
+  async isPreviousElectricReadFieldVisible(): Promise<boolean> {
+    return await this.previousElectricReadField.isVisible();
   }
 
   /**
-   * Retrieves the locator for the 'Estimated Electric use (kWh):' field.
-   * This method is exposed for test layer assertions on the locator's state or value.
-   * @returns The Playwright Locator for the estimated electric use field.
+   * Checks if the previous electric read field is enabled.
    */
-  getEstimatedElectricUseFieldLocator(): Locator {
-    return this.estimatedElectricUseField;
+  async isPreviousElectricReadFieldEnabled(): Promise<boolean> {
+    return await this.previousElectricReadField.isEnabled();
   }
 
   /**
-   * Retrieves the locator for the 'Enter Previous Read:' field.
-   * This method is exposed for test layer assertions on the locator's state or value.
-   * @returns The Playwright Locator for the previous meter read field.
+   * Checks if the current electric read field is visible.
    */
-  getPreviousMeterReadFieldLocator(): Locator {
-    return this.previousMeterReadField;
+  async isCurrentElectricReadFieldVisible(): Promise<boolean> {
+    return await this.currentElectricReadField.isVisible();
   }
 
   /**
-   * Retrieves the locator for the 'Enter Current Read:' field.
-   * This method is exposed for test layer assertions on the locator's state or value.
-   * @returns The Playwright Locator for the current meter read field.
+   * Checks if the current electric read field is enabled.
    */
-  getCurrentMeterReadFieldLocator(): Locator {
-    return this.currentMeterReadField;
+  async isCurrentElectricReadFieldEnabled(): Promise<boolean> {
+    return await this.currentElectricReadField.isEnabled();
   }
 
-  // Add a navigate method if the page object is responsible for navigation
-  // async navigate(url: string): Promise<void> {
-  //   await this.page.goto(url);
-  // }
+  /**
+   * Checks if the estimated electric use field is visible.
+   */
+  async isEstimatedElectricUseFieldVisible(): Promise<boolean> {
+    return await this.estimatedElectricUseField.isVisible();
+  }
+
+  /**
+   * Checks if the estimated gas use field is visible.
+   * Note: The catalog indicates this field is disabled, so its enabled state might not change.
+   * It's primarily an output/display field based on description.
+   */
+  async isEstimatedGasUseFieldVisible(): Promise<boolean> {
+    return await this.estimatedGasUseField.isVisible();
+  }
+
+  /**
+   * Retrieves the value from the previous electric read field.
+   */
+  async getPreviousElectricReadValue(): Promise<string | null> {
+    return await this.previousElectricReadField.inputValue();
+  }
+
+  /**
+   * Retrieves the value from the current electric read field.
+   */
+  async getCurrentElectricReadValue(): Promise<string | null> {
+    return await this.currentElectricReadField.inputValue();
+  }
+
+  /**
+   * Retrieves the value from the estimated electric use field.
+   */
+  async getEstimatedElectricUse(): Promise<string | null> {
+    return await this.estimatedElectricUseField.inputValue();
+  }
+
+  /**
+   * Retrieves the value from the estimated gas use field.
+   */
+  async getEstimatedGasUse(): Promise<string | null> {
+    return await this.estimatedGasUseField.inputValue();
+  }
 }
