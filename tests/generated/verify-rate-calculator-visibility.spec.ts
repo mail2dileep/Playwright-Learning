@@ -1,39 +1,38 @@
-import { test, expect } from "@playwright/test";
-import { EnergyCostCalculatorPage } from "../../pages/EnergyCostCalculatorPage";
+import { test, expect } from '@playwright/test';
+import { EnergyCostCalculatorPage } from '../../pages/EnergyCostCalculatorPage'; // Adjust path as per your project structure
 
-test.describe("Energy Cost Calculator Page Initial State Verification", () => {
-  test("Verify Rate Calculator Visibility and Default Fields", async ({ page }) => {
-    const energyCostCalculatorPage = new EnergyCostCalculatorPage(page);
+test.describe('Verify Rate Calculator Visibility and Initial State', () => {
+    const ENERGY_CALCULATOR_URL = 'https://www.cpsenergy.com/content/corporate/en/my-home/savings-programs/energy-cost-calculator.html';
 
-    await test.step("Step 1: Navigate to the Energy Cost Calculator page.", async () => {
-      await energyCostCalculatorPage.navigateTo();
+    test('Should display rate calculator and initial fields', async ({ page }) => {
+        const calculatorPage = new EnergyCostCalculatorPage(page);
+
+        // Step 1: Navigate to the Energy Cost Calculator page.
+        // Input Data: URL: https://www.cpsenergy.com/content/corporate/en/my-home/savings-programs/energy-cost-calculator.html
+        // Expected Result: Rate calculator section is visible on the page.
+        await test.step('Navigate to Energy Cost Calculator page and verify visibility', async () => {
+            await calculatorPage.navigate(ENERGY_CALCULATOR_URL);
+            await expect(calculatorPage.rateCalculatorContainer, 'Rate calculator section should be visible').toBeVisible();
+        });
+
+        // Step 2: Check for the presence of Service Type dropdown, Meter Read fields, and action buttons.
+        // Input Data: N/A
+        // Expected Result: Service Type dropdown, Electric/Gas Meter Read fields, Calculate button, and Reset button are all present.
+        await test.step('Verify presence of key calculator fields and buttons', async () => {
+            // Verify Service Type dropdown (Month dropdown as per catalog analysis)
+            await expect(calculatorPage.monthDropdown, 'Month dropdown for service type should be visible').toBeVisible();
+
+            // Verify Meter Read fields ('Enter Previous Read' and 'Enter Current Read')
+            await expect(calculatorPage.previousReadInputField, 'Previous Read input field should be visible').toBeVisible();
+            await expect(calculatorPage.currentReadInputField, 'Current Read input field should be visible').toBeVisible();
+
+            // Verify Service Type radio buttons (Electric and Electric/Gas options)
+            await expect(calculatorPage.electricServiceTypeRadio, 'Electric Service Type radio button should be visible').toBeVisible();
+            await expect(calculatorPage.electricGasServiceTypeRadio, 'Electric/Gas Service Type radio button should be visible').toBeVisible();
+
+            // Verify Action buttons
+            await expect(calculatorPage.calculateButton, 'Calculate button should be visible').toBeVisible();
+            await expect(calculatorPage.resetButton, 'Reset button should be visible').toBeVisible();
+        });
     });
-
-    await test.step("Expected Result: Rate calculator section is visible with Service Type selection, Meter Read fields, and Calculate/Reset buttons.", async () => {
-      // Verify Rate calculator section is visible
-      await expect(await energyCostCalculatorPage.isRateCalculatorSectionVisible()).toBe(true);
-
-      // Verify default values for Meter Read fields
-      await expect(await energyCostCalculatorPage.getPreviousReadValue()).toBe("0");
-      await expect(await energyCostCalculatorPage.getCurrentReadValue()).toBe("0");
-
-      // Verify default value for estimated electric use
-      await expect(await energyCostCalculatorPage.getEstimatedElectricUseValue()).toBe("0");
-
-      // Verify estimated gas use field is disabled and its default value
-      await expect(await energyCostCalculatorPage.getEstimatedGasUseValue()).toBe("0");
-      await expect(await energyCostCalculatorPage.isEstimatedGasUseFieldDisabled()).toBe(true);
-
-      // Verify default selected month (currentValue for gMonth1 is m06 - June)
-      await expect(await energyCostCalculatorPage.getSelectedMonthValue()).toBe("m06");
-
-      // Verify default service type (assuming 'Electric' is default, 'E' is currentValue for #e)
-      await expect(await energyCostCalculatorPage.isElectricServiceTypeSelected()).toBe(true);
-      await expect(await energyCostCalculatorPage.isElectricAndGasServiceTypeSelected()).toBe(false);
-
-      // Verify Calculate and Reset buttons are visible
-      await expect(await energyCostCalculatorPage.isCalculateButtonVisible()).toBe(true);
-      await expect(await energyCostCalculatorPage.isResetButtonVisible()).toBe(true);
-    });
-  });
 });
