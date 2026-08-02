@@ -1,1 +1,40 @@
-import { test, expect } from '@playwright/test';\nimport { CalculatorPage } from '../pages/CalculatorPage';\n\ntest.describe('Electric Only Calculation Workflow', () => {\n  let calculatorPage: CalculatorPage;\n  const testUrl = 'https://example.com/calculator'; // Placeholder URL. Replace with actual URL.\n\n  test.beforeEach(async ({ page }) => {\n    calculatorPage = new CalculatorPage(page);\n    await calculatorPage.navigateTo(testUrl); // Ensure navigation to the calculator page before each test\n  });\n\n  test('MTX-4506: Verify Electric Only Calculation', async () => {\n    // Step 1: Select 'Electric only' from the Service Type options.\n    await test.step('Select "Electric only" service type and verify field states', async () => {\n      await calculatorPage.selectElectricOnlyService();\n\n      // Expected Result: Electric Meter Read field is enabled; Gas Meter Read field is disabled or hidden if applicable.\n      await expect(await calculatorPage.isPreviousElectricReadFieldEnabled(),\n        'Previous Electric Read field should be enabled').toBe(true);\n      await expect(await calculatorPage.isGasConsumptionFieldDisabled(),\n        'Gas Consumption field should be disabled').toBe(true);\n    });\n\n    // Step 2: Enter a valid numeric value in the Electric Meter Read field.\n    await test.step('Enter electric meter read value', async () => {\n      const electricReadValue = '500';\n      await calculatorPage.enterPreviousElectricRead(electricReadValue);\n\n      // Expected Result: Value is accepted in the field.\n      await expect(await calculatorPage.getPreviousElectricReadFieldValue(),\n        'Previous Electric Read field should contain the entered value').toBe(electricReadValue);\n    });\n\n    // Step 3: Click on the 'Calculate' button.\n    await test.step('Click Calculate button and verify estimated electric use', async () => {\n      await calculatorPage.clickCalculateButton();\n\n      // Expected Result: The calculated price for electric service is displayed to the user.\n      const estimatedElectricUse = await calculatorPage.getEstimatedElectricUseValue();\n      await expect(estimatedElectricUse,\n        'Estimated Electric use should be a non-zero numeric value').not.toBe('0');\n      // Assert it's a valid number string (e.g., '123' or '123.45'). Adjust regex if specific formatting is expected.\n      await expect(estimatedElectricUse,\n        'Estimated Electric use should be a valid number string').toMatch(/^\d+(\.\d+)?$/);\n    });\n  });\n}
+import { test, expect } from '@playwright/test';
+import { CalculatorPage } from '../../pages/CalculatorPage';
+
+test.describe('Calculator Page - Electric Only Functionality', () => {
+
+  test('should correctly calculate electric usage when \'Electric only\' service type is selected', async ({ page }) => {
+    const calculatorPage = new CalculatorPage(page);
+
+    // Assume navigation to the calculator page is handled by a global setup or beforeEach hook
+    // For demonstration, navigate to a placeholder URL.
+    await page.goto('/calculator'); 
+
+    // Step 1: Select 'Electric only' from the Service type dropdown (using radio button)
+    await test.step("Select 'Electric only' service type", async () => {
+      await calculatorPage.selectElectricOnlyService();
+      // Expected Result: Only Electric-related input fields are active/relevant.
+      // The 'Estimated Gas use (Ccf):' field should be disabled.
+      await expect(calculatorPage.getEstimatedGasUseFieldLocator()).toBeDisabled();
+    });
+
+    // Step 2: Enter a value in the 'Electric Meter Read' fields
+    // We'll enter values for both previous and current reads to enable a calculation.
+    await test.step("Enter meter read values for electric service", async () => {
+      await calculatorPage.enterPreviousRead('500');
+      await calculatorPage.enterCurrentRead('1000');
+      // Expected Result: Values are accepted in the fields.
+      await expect(calculatorPage.getPreviousMeterReadFieldLocator()).toHaveValue('500');
+      await expect(calculatorPage.getCurrentMeterReadFieldLocator()).toHaveValue('1000');
+    });
+
+    // Step 3: Click the 'Calculate' button.
+    await test.step("Click 'Calculate' button", async () => {
+      await calculatorPage.clickCalculateButton();
+      // Expected Result: The calculated price for electric service is displayed.
+      // Assuming 1000 (current) - 500 (previous) = 500 kWh.
+      await expect(calculatorPage.getEstimatedElectricUseFieldLocator()).toHaveValue('500');
+    });
+
+  });
+});
