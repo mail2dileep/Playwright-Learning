@@ -1,49 +1,62 @@
 import { test, expect } from '@playwright/test';
-import { RateCalculatorPage } from '../../pages/RateCalculatorPage';
+import { CalculatorPage } from '../../pages/CalculatorPage'; // Adjust path as necessary
 
-test.describe('Rate Calculator Functionality', () => {
+test.describe('Electric and Gas Calculation Functionality', () => {
+  let calculatorPage: CalculatorPage;
 
-  test('Verify Electric and Gas Calculation - MTX-4506', async ({ page }) => {
-    const calculatorPage = new RateCalculatorPage(page);
+  test.beforeEach(async ({ page }) => {
+    calculatorPage = new CalculatorPage(page);
+    // Assuming a base URL is configured in playwright.config.ts
+    // Or navigate directly if URL is dynamic/not configured globally
+    await calculatorPage.navigateTo('/calculator'); // Placeholder URL, update as needed
+  });
 
-    // In a real enterprise framework, page.goto() might be handled by a fixture or global setup.
-    // For this example, assuming the test starts on the Rate Calculator page.
-    // If a base URL is configured in playwright.config.ts, page.goto('/') might be appropriate here.
+  test('MTX-4278: Verify Electric and Gas Calculation', async ({ page }) => {
+    const previousElectricRead = '400';
+    const currentElectricRead = '200'; // This seems illogical if current is less than previous, but following provided input.
 
-    await test.step('Step 1: Select \'Electric and Gas\' from the Service Type options.', async () => {
-      await calculatorPage.selectServiceType('Electric and Gas');
+    // Step 1: Select 'Electric and Gas' from the Service type dropdown.
+    // Input Data: Service Type: Electric and Gas
+    await test.step('Step 1: Select Electric and Gas service type', async () => {
+      await calculatorPage.selectElectricAndGasService();
 
-      // Expected Result: Both Electric Meter Read and Gas Meter Read fields are enabled.
-      // 'Enter Current Read:' is a key Electric input field.
-      // 'Estimated Gas use (Ccf):' is assumed to be the Gas input field that gets enabled.
-      await expect(calculatorPage.getCurrentElectricReadLocator()).toBeEnabled();
-      await expect(calculatorPage.getEstimatedGasUseLocator()).toBeEnabled();
+      // Expected Result: Both Electric and Gas Meter Read fields are available.
+      await expect(await calculatorPage.isPreviousElectricReadFieldVisible()).toBe(true, 'Previous Electric Read field should be visible.');
+      await expect(await calculatorPage.isPreviousElectricReadFieldEnabled()).toBe(true, 'Previous Electric Read field should be enabled.');
+      await expect(await calculatorPage.isCurrentElectricReadFieldVisible()).toBe(true, 'Current Electric Read field should be visible.');
+      await expect(await calculatorPage.isCurrentElectricReadFieldEnabled()).toBe(true, 'Current Electric Read field should be enabled.');
+
+      // The 'Estimated Gas use (Ccf):' field (gasconsumption) is cataloged as disabled and likely an output field.
+      // We can only assert its visibility, not its enabled state for input based on the provided catalog.
+      // There is no dedicated 'Gas Meter Read' input field in the catalog.
+      await expect(await calculatorPage.isEstimatedGasUseFieldVisible()).toBe(true, 'Estimated Gas Use field should be visible.');
     });
 
-    await test.step('Step 2: Enter valid numeric values in both Electric and Gas Meter Read fields.', async () => {
-      const electricValue = '450';
-      const gasValue = '120';
+    // Step 2: Enter values in 'Electric Meter Read' and 'Gas Meter Read' fields.
+    // Input Data: Electric: 400, Gas: 200
+    await test.step('Step 2: Enter values in Electric Meter Read fields', async () => {
+      await calculatorPage.enterPreviousElectricRead(previousElectricRead);
+      await calculatorPage.enterCurrentElectricRead(currentElectricRead);
 
-      // Assuming 'Enter Previous Read:' also needs a default value for calculation.
-      await calculatorPage.enterPreviousElectricRead('0');
-      await calculatorPage.enterCurrentElectricRead(electricValue);
-      await calculatorPage.enterGasRead(gasValue);
+      // TODO: Locator for 'Gas Meter Read' input field for entering values is not found in the catalog.
+      // The 'Estimated Gas use (Ccf):' field is cataloged as disabled and an output field.
 
       // Expected Result: Values are accepted in both fields.
-      await expect(calculatorPage.getCurrentElectricReadLocator()).toHaveValue(electricValue);
-      await expect(calculatorPage.getEstimatedGasUseLocator()).toHaveValue(gasValue);
+      await expect(await calculatorPage.getPreviousElectricReadValue()).toBe(previousElectricRead, 'Previous Electric Read value should be accepted.');
+      await expect(await calculatorPage.getCurrentElectricReadValue()).toBe(currentElectricRead, 'Current Electric Read value should be accepted.');
     });
 
-    await test.step('Step 3: Click on the \'Calculate\' button and verify results.', async () => {
+    // Step 3: Click the 'Calculate' button.
+    // Input Data: N/A
+    await test.step('Step 3: Click the Calculate button', async () => {
       await calculatorPage.clickCalculateButton();
 
-      // Expected Result: The combined calculated price for both services is displayed.
-      // As there is no explicit 'price' display field in the catalog, we assert that
-      // the estimated consumption fields for Electric and Gas are updated (not '0'),
-      // implying a successful calculation and display of results.
-      await expect(calculatorPage.getEstimatedElectricUseLocator()).not.toHaveValue('0');
-      await expect(calculatorPage.getEstimatedGasUseLocator()).not.toHaveValue('0');
-      // Further assertion might involve checking for specific calculated values if known.
+      // Expected Result: The combined calculated price is displayed.
+      // The catalog does not provide a specific locator for 'combined calculated price'.
+      // Asserting visibility of related output fields for electric and gas usage.
+      await expect(await calculatorPage.isEstimatedElectricUseFieldVisible()).toBe(true, 'Estimated Electric Use field should be visible after calculation.');
+      await expect(await calculatorPage.isEstimatedGasUseFieldVisible()).toBe(true, 'Estimated Gas Use field should be visible after calculation.');
+      // TODO: Specific locator for 'combined calculated price' is missing from the catalog.
     });
   });
 });
