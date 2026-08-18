@@ -1,27 +1,26 @@
 import { test, expect } from '@playwright/test';
 import { RateCalculatorPage } from '../../pages/RateCalculatorPage';
 
-test.describe('Service Type Selection Validation', () => {
-
-  test('Verify that selecting "Electric only" displays the appropriate input fields', async ({ page }) => {
-    // Instantiate Page Object
+test.describe('Service Type Selection', () => {
+  test('Verify Service Type selection - Electric only', async ({ page }) => {
     const rateCalculatorPage = new RateCalculatorPage(page);
 
-    // Navigate to the calculator page (assuming a base URL is configured in playwright.config.ts)
-    await page.goto('/calculator');
+    // TODO: Replace with actual URL for the Rate Calculator page.
+    // Example: await page.goto('http://localhost:3000/rate-calculator');
 
-    // Step 1: Select 'Electric only' from the Service Type dropdown.
+    // Step 1: Select 'Electric only' from the Service Type options.
     await rateCalculatorPage.selectServiceTypeElectricOnly();
 
-    // Expected Result: The 'Electric Meter Read' field is visible
-    // Using 'Enter Previous Read:' as a representative for 'Electric Meter Read' field.
-    expect(await rateCalculatorPage.isPreviousElectricReadFieldVisible(), 'Previous Electric Read field should be visible').toBe(true);
+    // Expected Result: Electric Meter Read fields are displayed; Gas Meter Read field is hidden.
+    // The 'Electric Meter Read field' refers to 'Enter Previous Read:', 'Enter Current Read:', and 'Estimated Electric use (kWh):'.
+    // The 'Gas Meter Read field' refers to 'Estimated Gas use (Ccf):'.
 
-    // Expected Result: and the 'Gas Meter Read' field is hidden or disabled.
-    // Check if the 'Estimated Gas use (Ccf)' field is visible.
-    expect(await rateCalculatorPage.isEstimatedGasUseFieldVisible(), 'Estimated Gas use field should not be visible').toBe(false);
-    // Check if the 'Estimated Gas use (Ccf)' field is disabled.
-    // Based on the locator catalog, this field is initially disabled. Selecting "Electric only" should keep it disabled.
-    expect(await rateCalculatorPage.isEstimatedGasUseFieldDisabled(), 'Estimated Gas use field should be disabled').toBe(true);
+    // Assertions for Electric fields being displayed
+    expect(await rateCalculatorPage.isElectricPreviousReadFieldVisible(), 'Previous Meter Read field should be visible.').toBe(true);
+    expect(await rateCalculatorPage.isElectricCurrentReadFieldVisible(), 'Current Meter Read field should be visible.').toBe(true);
+    expect(await rateCalculatorPage.isEstimatedElectricUseFieldVisible(), 'Estimated Electric Use field should be visible.').toBe(true);
+
+    // Assertion for Gas field being hidden
+    expect(await rateCalculatorPage.isGasConsumptionFieldHidden(), 'Gas Consumption field should be hidden.').toBe(true);
   });
 });
