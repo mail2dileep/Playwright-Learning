@@ -2,63 +2,75 @@ import { Page, Locator } from '@playwright/test';
 
 export class RateCalculatorPage {
   private readonly page: Page;
-  private readonly monthDropdown: Locator;
-  private readonly previousReadInput: Locator;
-  private readonly currentReadInput: Locator;
-  private readonly estimatedElectricUseInput: Locator;
-  private readonly electricServiceRadio: Locator;
-  private readonly electricGasServiceRadio: Locator;
-  private readonly calculateButton: Locator;
-  private readonly resetButton: Locator;
+  
+  // Locators
+  public readonly monthSelect: Locator;
+  public readonly previousReadInput: Locator;
+  public readonly currentReadInput: Locator;
+  public readonly estimatedElectricUseInput: Locator;
+  public readonly estimatedGasUseInput: Locator;
+  public readonly electricServiceRadio: Locator;
+  public readonly electricGasServiceRadio: Locator;
+  public readonly calculateButton: Locator;
+  public readonly resetButton: Locator;
 
   constructor(page: Page) {
     this.page = page;
-    this.monthDropdown = page.getByLabel('Month');
+    this.monthSelect = page.getByLabel('Month');
     this.previousReadInput = page.getByLabel('Enter Previous Read:');
     this.currentReadInput = page.getByLabel('Enter Current Read:');
     this.estimatedElectricUseInput = page.getByLabel('Estimated Electric use (kWh):');
-    this.electricServiceRadio = page.locator('#e');
-    this.electricGasServiceRadio = page.locator('#eg');
+    this.estimatedGasUseInput = page.getByLabel('Estimated Gas use (Ccf):'); // Disabled by default
+    this.electricServiceRadio = page.locator('#e'); // Radio button for Electric service type
+    this.electricGasServiceRadio = page.locator('#eg'); // Radio button for Electric & Gas service type
     this.calculateButton = page.locator('#validateMoveInBtn');
     this.resetButton = page.locator('#rateCalCancelBtn');
   }
 
   /**
-   * Selects a month from the dropdown.
-   * @param monthValue The value attribute of the month option (e.g., 'm06' for June).
+   * Navigates to the specified URL. In an AEM context, this would typically be an authoring page.
+   * @param url The URL of the page containing the Rate Calculator component.
    */
-  async selectMonth(monthValue: string): Promise<void> {
-    await this.monthDropdown.selectOption(monthValue);
+  async navigateTo(url: string): Promise<void> {
+    await this.page.goto(url);
   }
 
   /**
-   * Enters a value into the 'Previous Read' input field.
-   * @param value The previous meter reading.
+   * Selects a month from the 'Month' dropdown.
+   * @param monthValue The value attribute of the month option (e.g., 'm07' for July).
+   */
+  async selectMonth(monthValue: string): Promise<void> {
+    await this.monthSelect.selectOption(monthValue);
+  }
+
+  /**
+   * Enters a value into the 'Enter Previous Read:' input field.
+   * @param value The previous meter read value as a string.
    */
   async enterPreviousRead(value: string): Promise<void> {
     await this.previousReadInput.fill(value);
   }
 
   /**
-   * Enters a value into the 'Current Read' input field.
-   * @param value The current meter reading.
+   * Enters a value into the 'Enter Current Read:' input field.
+   * @param value The current meter read value as a string.
    */
   async enterCurrentRead(value: string): Promise<void> {
     await this.currentReadInput.fill(value);
   }
 
   /**
-   * Selects the 'Electric' service type radio button.
+   * Selects a service type radio button.
+   * @param type The service type to select: 'Electric' or 'Electric & Gas'.
    */
-  async selectElectricServiceType(): Promise<void> {
-    await this.electricServiceRadio.check();
-  }
-
-  /**
-   * Selects the 'Electric and Gas' service type radio button.
-   */
-  async selectElectricGasServiceType(): Promise<void> {
-    await this.electricGasServiceRadio.check();
+  async selectServiceType(type: 'Electric' | 'Electric & Gas'): Promise<void> {
+    if (type === 'Electric') {
+      await this.electricServiceRadio.click();
+    } else if (type === 'Electric & Gas') {
+      await this.electricGasServiceRadio.click();
+    } else {
+      throw new Error(`Unsupported service type: ${type}`);
+    }
   }
 
   /**
@@ -69,59 +81,29 @@ export class RateCalculatorPage {
   }
 
   /**
-   * Clicks the 'Reset' button to clear all inputs and results.
+   * Clicks the 'Reset' button to clear input fields.
    */
   async clickReset(): Promise<void> {
     await this.resetButton.click();
   }
 
   /**
-   * Retrieves the current value from the 'Previous Read' input field.
-   * @returns The string value of the 'Previous Read' input.
+   * Configures the Rate Calculator component's primary input fields.
+   * This method encapsulates the 'editing component details' action.
+   * @param monthValue The value attribute of the month option (e.g., 'm07').
+   * @param prevRead The previous meter read value.
+   * @param currentRead The current meter read value.
+   * @param serviceType The service type ('Electric' or 'Electric & Gas').
    */
-  async getPreviousReadValue(): Promise<string> {
-    return this.previousReadInput.inputValue();
-  }
-
-  /**
-   * Retrieves the current value from the 'Current Read' input field.
-   * @returns The string value of the 'Current Read' input.
-   */
-  async getCurrentReadValue(): Promise<string> {
-    return this.currentReadInput.inputValue();
-  }
-
-  /**
-   * Retrieves the current value from the 'Estimated Electric use (kWh)' input field.
-   * @returns The string value of the estimated electric use.
-   */
-  async getEstimatedElectricUseValue(): Promise<string> {
-    return this.estimatedElectricUseInput.inputValue();
-  }
-
-  /**
-   * Retrieves the currently selected value from the 'Month' dropdown.
-   * @returns The value attribute of the selected month option.
-   */
-  async getSelectedMonthValue(): Promise<string> {
-    return this.monthDropdown.inputValue();
-  }
-
-  /**
-   * Performs a complete calculation workflow by filling inputs, selecting service type, and clicking calculate.
-   * @param previousRead The value for the previous meter reading.
-   * @param currentRead The value for the current meter reading.
-   * @param monthValue The value attribute of the month option (defaults to 'm06' for June).
-   */
-  async performCalculation(
-    previousRead: string,
+  async configureCalculatorDetails(
+    monthValue: string,
+    prevRead: string,
     currentRead: string,
-    monthValue: string = 'm06'
+    serviceType: 'Electric' | 'Electric & Gas'
   ): Promise<void> {
     await this.selectMonth(monthValue);
-    await this.enterPreviousRead(previousRead);
+    await this.enterPreviousRead(prevRead);
     await this.enterCurrentRead(currentRead);
-    await this.selectElectricServiceType(); 
-    await this.clickCalculate();
+    await this.selectServiceType(serviceType);
   }
 }
