@@ -1,68 +1,125 @@
 import { Page, Locator } from '@playwright/test';
 
 export class RateCalculatorPage {
-  private readonly monthDropdown: Locator;
-  private readonly previousMeterReadInput: Locator;
-  private readonly currentMeterReadInput: Locator;
-  private readonly estimatedElectricUseInput: Locator;
-  private readonly estimatedGasUseInput: Locator;
-  private readonly electricOnlyRadio: Locator;
-  private readonly electricGasRadio: Locator;
-  private readonly calculateButton: Locator;
-  private readonly resetButton: Locator;
-  private readonly howToReadYourBillButton: Locator;
-  private readonly howToFindUsageButton: Locator;
+    private readonly page: Page;
 
-  constructor(private page: Page) {
-    this.monthDropdown = page.getByLabel('Month');
-    this.previousMeterReadInput = page.getByLabel('Enter Previous Read:');
-    this.currentMeterReadInput = page.getByLabel('Enter Current Read:');
-    this.estimatedElectricUseInput = page.getByLabel('Estimated Electric use (kWh):');
-    this.estimatedGasUseInput = page.getByLabel('Estimated Gas use (Ccf):');
-    this.electricOnlyRadio = page.locator('#e');
-    this.electricGasRadio = page.locator('#eg');
-    this.calculateButton = page.locator('#validateMoveInBtn');
-    this.resetButton = page.locator('#rateCalCancelBtn');
-    this.howToReadYourBillButton = page.locator('#howToReadYourBillBtn');
-    this.howToFindUsageButton = page.locator('#howToFindUsageBtn');
-  }
+    // Locators
+    private readonly monthDropdown: Locator;
+    private readonly previousReadInput: Locator;
+    private readonly currentReadInput: Locator;
+    private readonly estimatedElectricUseInput: Locator;
+    private readonly estimatedGasUseInput: Locator;
+    private readonly electricOnlyRadio: Locator;
+    private readonly electricAndGasRadio: Locator;
+    private readonly howToReadYourBillButton: Locator;
+    private readonly howToFindUsageButton: Locator;
+    private readonly resetButton: Locator;
+    private readonly calculateButton: Locator;
 
-  /**
-   * Selects the 'Electric only' service type radio button.
-   */
-  async selectServiceTypeElectricOnly(): Promise<void> {
-    await this.electricOnlyRadio.click();
-  }
+    constructor(page: Page) {
+        this.page = page;
 
-  /**
-   * Checks if the 'Enter Previous Read:' field is visible.
-   * @returns A promise that resolves to true if the field is visible, false otherwise.
-   */
-  async isElectricPreviousReadFieldVisible(): Promise<boolean> {
-    return this.previousMeterReadInput.isVisible();
-  }
+        // Initialize locators based on recommendedLocator from catalog
+        this.monthDropdown = page.getByLabel('Month');
+        this.previousReadInput = page.getByLabel('Enter Previous Read:');
+        this.currentReadInput = page.getByLabel('Enter Current Read:');
+        this.estimatedElectricUseInput = page.getByLabel('Estimated Electric use (kWh):');
+        this.estimatedGasUseInput = page.getByLabel('Estimated Gas use (Ccf):');
+        this.electricOnlyRadio = page.locator('#e');
+        this.electricAndGasRadio = page.locator('#eg');
+        this.howToReadYourBillButton = page.locator('#howToReadYourBillBtn');
+        this.howToFindUsageButton = page.locator('#howToFindUsageBtn');
+        this.resetButton = page.locator('#rateCalCancelBtn');
+        this.calculateButton = page.locator('#validateMoveInBtn');
+    }
 
-  /**
-   * Checks if the 'Enter Current Read:' field is visible.
-   * @returns A promise that resolves to true if the field is visible, false otherwise.
-   */
-  async isElectricCurrentReadFieldVisible(): Promise<boolean> {
-    return this.currentMeterReadInput.isVisible();
-  }
+    /**
+     * Selects a month from the month dropdown.
+     * @param monthValue The value attribute of the month option (e.g., 'm06' for June).
+     */
+    async selectMonth(monthValue: string): Promise<void> {
+        await this.monthDropdown.selectOption(monthValue);
+    }
 
-  /**
-   * Checks if the 'Estimated Electric use (kWh):' field is visible.
-   * @returns A promise that resolves to true if the field is visible, false otherwise.
-   */
-  async isEstimatedElectricUseFieldVisible(): Promise<boolean> {
-    return this.estimatedElectricUseInput.isVisible();
-  }
+    /**
+     * Enters a value into the 'Enter Previous Read' field.
+     * @param value The numeric value to enter.
+     */
+    async enterPreviousRead(value: string): Promise<void> {
+        await this.previousReadInput.fill(value);
+    }
 
-  /**
-   * Checks if the 'Estimated Gas use (Ccf):' field is hidden.
-   * @returns A promise that resolves to true if the field is hidden, false otherwise.
-   */
-  async isGasConsumptionFieldHidden(): Promise<boolean> {
-    return this.estimatedGasUseInput.isHidden();
-  }
+    /**
+     * Enters a value into the 'Enter Current Read' field.
+     * @param value The numeric value to enter.
+     */
+    async enterCurrentRead(value: string): Promise<void> {
+        await this.currentReadInput.fill(value);
+    }
+
+    /**
+     * Enters a value into the 'Estimated Electric use (kWh)' field.
+     * This field is typically calculated but can be directly entered for certain scenarios.
+     * @param value The numeric value to enter.
+     */
+    async enterEstimatedElectricUse(value: string): Promise<void> {
+        await this.estimatedElectricUseInput.fill(value);
+    }
+
+    /**
+     * Selects the 'Electric only' service type radio button.
+     */
+    async selectElectricOnlyServiceType(): Promise<void> {
+        await this.electricOnlyRadio.click();
+    }
+
+    /**
+     * Selects the 'Electric and Gas' service type radio button.
+     */    async selectElectricAndGasServiceType(): Promise<void> {
+        await this.electricAndGasRadio.click();
+    }
+
+    /**
+     * Clicks the 'How to Read Your Bill' button.
+     */
+    async clickHowToReadYourBill(): Promise<void> {
+        await this.howToReadYourBillButton.click();
+    }
+
+    /**
+     * Clicks the 'How to Find Usage' button.
+     */
+    async clickHowToFindUsage(): Promise<void> {
+        await this.howToFindUsageButton.click();
+    }
+
+    /**
+     * Clicks the 'Reset' button to clear form fields.
+     */
+    async clickResetButton(): Promise<void> {
+        await this.resetButton.click();
+    }
+
+    /**
+     * Clicks the 'Calculate' button to submit the form and view results.
+     */
+    async clickCalculateButton(): Promise<void> {
+        await this.calculateButton.click();
+    }
+
+    /**
+     * Returns the Locator for the 'Estimated Electric use (kWh)' input field.
+     * This can be used in test specs for assertions (e.g., toBeEnabled, toHaveValue).
+     */
+    getEstimatedElectricUseInput(): Locator {
+        return this.estimatedElectricUseInput;
+    }
+
+    /**
+     * Returns the Locator for the 'Estimated Gas use (Ccf)' input field.
+     * This can be used in test specs for assertions (e.g., toBeDisabled).
+     */
+    getEstimatedGasUseInput(): Locator {
+        return this.estimatedGasUseInput;
+    }
 }
