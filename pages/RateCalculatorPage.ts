@@ -1,16 +1,14 @@
-import { Page, Locator } from '@playwright/test';
+import { Page, Locator, expect } from '@playwright/test';
 
 export class RateCalculatorPage {
   private readonly page: Page;
-
-  // Locators from the catalog related to the calculator functionality
   private readonly monthDropdown: Locator;
   private readonly previousReadInput: Locator;
   private readonly currentReadInput: Locator;
   private readonly estimatedElectricUseInput: Locator;
-  private readonly estimatedGasUseInput: Locator; // disabled
-  private readonly electricServiceRadioButton: Locator;
-  private readonly electricGasServiceRadioButton: Locator;
+  private readonly estimatedGasUseInput: Locator;
+  private readonly electricServiceRadio: Locator;
+  private readonly electricAndGasServiceRadio: Locator;
   private readonly howToReadYourBillButton: Locator;
   private readonly howToFindUsageButton: Locator;
   private readonly resetButton: Locator;
@@ -18,15 +16,13 @@ export class RateCalculatorPage {
 
   constructor(page: Page) {
     this.page = page;
-
-    // Initializing locators based on the provided catalog
     this.monthDropdown = page.getByLabel('Month');
     this.previousReadInput = page.getByLabel('Enter Previous Read:');
     this.currentReadInput = page.getByLabel('Enter Current Read:');
     this.estimatedElectricUseInput = page.getByLabel('Estimated Electric use (kWh):');
-    this.estimatedGasUseInput = page.getByLabel('Estimated Gas use (Ccf):'); // disabled
-    this.electricServiceRadioButton = page.locator('#e');
-    this.electricGasServiceRadioButton = page.locator('#eg');
+    this.estimatedGasUseInput = page.getByLabel('Estimated Gas use (Ccf):');
+    this.electricServiceRadio = page.locator('#e');
+    this.electricAndGasServiceRadio = page.locator('#eg');
     this.howToReadYourBillButton = page.locator('#howToReadYourBillBtn');
     this.howToFindUsageButton = page.locator('#howToFindUsageBtn');
     this.resetButton = page.locator('#rateCalCancelBtn');
@@ -34,61 +30,109 @@ export class RateCalculatorPage {
   }
 
   /**
-   * Selects an audience from an audience switcher component.
-   * This action is required by the test but the specific locator for
-   * 'audience switcher' and 'SMB Advertiser' is not available in the catalog.
-   * @param audience The name of the audience to select (e.g., 'SMB Advertiser').
+   * Selects a month from the Month dropdown.
+   * @param monthValue The value attribute of the month option (e.g., 'm06' for June).
    */
-  async selectAudience(audience: string): Promise<void> {
-    // TODO: Locator for 'audience switcher' with text 'SMB Advertiser' not found in catalog.
-    // Example: await this.audienceSwitcherDropdown.selectOption({ label: audience });
-    console.warn(`Action: selectAudience("${audience}") - Locator not found in catalog. Simulating action.`);
-    // Placeholder for actual interaction
-    await this.page.waitForTimeout(500); // Simulate network/UI update
-  }
-
-  /**
-   * Retrieves the text of the navigation menu labels.
-   * This action is required by the test but the specific locators for
-   * 'navigation menu labels' (e.g., 'Business Solutions') are not available in the catalog.
-   * @returns A promise that resolves to an array of navigation label strings.
-   */
-  async getNavigationLabels(): Promise<string[]> {
-    // TODO: Locator for 'navigation menu labels' (e.g., 'Business Solutions') not found in catalog.
-    console.warn('Action: getNavigationLabels() - Locator not found in catalog. Returning empty array.');
-    return []; // Return an empty array as a placeholder
-  }
-
-  /**
-   * Retrieves the text of the primary Call to Action (CTA) buttons.
-   * This action is required by the test but the specific locators for
-   * 'CTA buttons' (e.g., 'Start Advertising') are not available in the catalog.
-   * @returns A promise that resolves to an array of CTA label strings.
-   */
-  async getCTALabels(): Promise<string[]> {
-    // TODO: Locator for 'primary Call to Action (CTA) buttons' (e.g., 'Start Advertising') not found in catalog.
-    console.warn('Action: getCTALabels() - Locator not found in catalog. Returning empty array.');
-    return []; // Return an empty array as a placeholder
-  }
-
-  // Example of a method that uses an existing locator from the catalog (not part of the current test steps)
   async selectMonth(monthValue: string): Promise<void> {
     await this.monthDropdown.selectOption(monthValue);
   }
 
-  async enterPreviousRead(readValue: string): Promise<void> {
-    await this.previousReadInput.fill(readValue);
+  /**
+   * Enters the previous meter read value.
+   * @param value The previous read value as a string.
+   */
+  async enterPreviousRead(value: string): Promise<void> {
+    await this.previousReadInput.fill(value);
   }
 
-  async enterCurrentRead(readValue: string): Promise<void> {
-    await this.currentReadInput.fill(readValue);
+  /**
+   * Enters the current meter read value.
+   * @param value The current read value as a string.
+   */
+  async enterCurrentRead(value: string): Promise<void> {
+    await this.currentReadInput.fill(value);
   }
 
-  async selectElectricServiceType(): Promise<void> {
-    await this.electricServiceRadioButton.click();
+  /**
+   * Retrieves the estimated electric use value.
+   * @returns The estimated electric use value as a string.
+   */
+  async getEstimatedElectricUse(): Promise<string> {
+    return this.estimatedElectricUseInput.inputValue();
   }
 
-  async clickCalculateButton(): Promise<void> {
+  /**
+   * Retrieves the estimated gas use value. Note: This field is disabled based on the locator catalog.
+   * @returns The estimated gas use value as a string.
+   */
+  async getEstimatedGasUse(): Promise<string> {
+    await expect(this.estimatedGasUseInput).toBeDisabled();
+    return this.estimatedGasUseInput.inputValue();
+  }
+
+  /**
+   * Selects the 'Electric' service type radio button.
+   */
+  async selectElectricService(): Promise<void> {
+    await this.electricServiceRadio.check();
+  }
+
+  /**
+   * Selects the 'Electric and Gas' service type radio button.
+   */
+  async selectElectricAndGasService(): Promise<void> {
+    await this.electricAndGasServiceRadio.check();
+  }
+
+  /**
+   * Clicks the 'How to Read Your Bill' button.
+   */
+  async clickHowToReadYourBill(): Promise<void> {
+    await this.howToReadYourBillButton.click();
+  }
+
+  /**
+   * Clicks the 'How to Find Usage' button.
+   */
+  async clickHowToFindUsage(): Promise<void> {
+    await this.howToFindUsageButton.click();
+  }
+
+  /**
+   * Clicks the 'Reset' button to clear the form.
+   */
+  async clickReset(): Promise<void> {
+    await this.resetButton.click();
+  }
+
+  /**
+   * Clicks the 'Calculate' button to submit the form.
+   */
+  async clickCalculate(): Promise<void> {
     await this.calculateButton.click();
+  }
+
+  // --- Methods for 'Verify Audience Preference Persistence' test, not found in RateCalculatorPage context --- 
+  /**
+   * Selects the audience preference.
+   * // TODO: Locator not found in catalog for audience switcher (e.g., 'SMB Advertiser').
+   * @param preference The audience preference to select.
+   */
+  async selectAudiencePreference(preference: string): Promise<void> {
+    console.warn(`Attempted to select audience preference '${preference}'. Locator for audience switcher not found in catalog. `);
+    // For demonstration, simulating action if it were available:
+    // await this.audienceSwitcherLocator.selectOption(preference);
+  }
+
+  /**
+   * Retrieves the currently set audience preference.
+   * // TODO: Locator not found in catalog for audience preference display.
+   * @returns A promise that resolves to the current audience preference text.
+   */
+  async getAudiencePreference(): Promise<string> {
+    console.warn("Attempted to get audience preference. Locator for audience preference display not found in catalog.");
+    // For demonstration, simulating a returned value if it were available:
+    // return this.currentAudienceDisplayLocator.textContent() || '';
+    return Promise.resolve(''); // Return an empty string or throw an error to indicate absence
   }
 }
