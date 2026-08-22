@@ -1,7 +1,9 @@
-import { Page, Locator, expect } from '@playwright/test';
+import { Page, Locator } from '@playwright/test';
 
 export class RateCalculatorPage {
   private readonly page: Page;
+
+  // Locators
   private readonly monthDropdown: Locator;
   private readonly previousReadInput: Locator;
   private readonly currentReadInput: Locator;
@@ -21,8 +23,8 @@ export class RateCalculatorPage {
     this.currentReadInput = page.getByLabel('Enter Current Read:');
     this.estimatedElectricUseInput = page.getByLabel('Estimated Electric use (kWh):');
     this.estimatedGasUseInput = page.getByLabel('Estimated Gas use (Ccf):');
-    this.electricServiceRadio = page.locator('#e');
-    this.electricAndGasServiceRadio = page.locator('#eg');
+    this.electricServiceRadio = page.locator('#e'); // radioGroup: servicetype, currentValue: E
+    this.electricAndGasServiceRadio = page.locator('#eg'); // radioGroup: servicetype, currentValue: EG
     this.howToReadYourBillButton = page.locator('#howToReadYourBillBtn');
     this.howToFindUsageButton = page.locator('#howToFindUsageBtn');
     this.resetButton = page.locator('#rateCalCancelBtn');
@@ -30,7 +32,7 @@ export class RateCalculatorPage {
   }
 
   /**
-   * Selects a month from the Month dropdown.
+   * Selects a month from the dropdown.
    * @param monthValue The value attribute of the month option (e.g., 'm06' for June).
    */
   async selectMonth(monthValue: string): Promise<void> {
@@ -38,50 +40,47 @@ export class RateCalculatorPage {
   }
 
   /**
-   * Enters the previous meter read value.
-   * @param value The previous read value as a string.
+   * Enters a value into the previous meter read input field.
+   * @param readValue The previous meter read value.
    */
-  async enterPreviousRead(value: string): Promise<void> {
-    await this.previousReadInput.fill(value);
+  async enterPreviousRead(readValue: string): Promise<void> {
+    await this.previousReadInput.fill(readValue);
   }
 
   /**
-   * Enters the current meter read value.
-   * @param value The current read value as a string.
+   * Enters a value into the current meter read input field.
+   * @param readValue The current meter read value.
    */
-  async enterCurrentRead(value: string): Promise<void> {
-    await this.currentReadInput.fill(value);
+  async enterCurrentRead(readValue: string): Promise<void> {
+    await this.currentReadInput.fill(readValue);
   }
 
   /**
-   * Retrieves the estimated electric use value.
-   * @returns The estimated electric use value as a string.
-   */
-  async getEstimatedElectricUse(): Promise<string> {
-    return this.estimatedElectricUseInput.inputValue();
-  }
-
-  /**
-   * Retrieves the estimated gas use value. Note: This field is disabled based on the locator catalog.
-   * @returns The estimated gas use value as a string.
-   */
-  async getEstimatedGasUse(): Promise<string> {
-    await expect(this.estimatedGasUseInput).toBeDisabled();
-    return this.estimatedGasUseInput.inputValue();
-  }
-
-  /**
-   * Selects the 'Electric' service type radio button.
+   * Selects the 'Electric Only' service type radio button.
    */
   async selectElectricService(): Promise<void> {
-    await this.electricServiceRadio.check();
+    await this.electricServiceRadio.click();
   }
 
   /**
    * Selects the 'Electric and Gas' service type radio button.
    */
   async selectElectricAndGasService(): Promise<void> {
-    await this.electricAndGasServiceRadio.check();
+    await this.electricAndGasServiceRadio.click();
+  }
+
+  /**
+   * Clicks the 'Calculate' button.
+   */
+  async clickCalculate(): Promise<void> {
+    await this.calculateButton.click();
+  }
+
+  /**
+   * Clicks the 'Reset' button.
+   */
+  async clickReset(): Promise<void> {
+    await this.resetButton.click();
   }
 
   /**
@@ -99,40 +98,68 @@ export class RateCalculatorPage {
   }
 
   /**
-   * Clicks the 'Reset' button to clear the form.
+   * Retrieves the estimated electric use value.
+   * @returns The string value of estimated electric use.
    */
-  async clickReset(): Promise<void> {
-    await this.resetButton.click();
+  async getEstimatedElectricUse(): Promise<string> {
+    return await this.estimatedElectricUseInput.inputValue();
   }
 
   /**
-   * Clicks the 'Calculate' button to submit the form.
+   * Retrieves the estimated gas use value.
+   * @returns The string value of estimated gas use.
    */
-  async clickCalculate(): Promise<void> {
-    await this.calculateButton.click();
-  }
-
-  // --- Methods for 'Verify Audience Preference Persistence' test, not found in RateCalculatorPage context --- 
-  /**
-   * Selects the audience preference.
-   * // TODO: Locator not found in catalog for audience switcher (e.g., 'SMB Advertiser').
-   * @param preference The audience preference to select.
-   */
-  async selectAudiencePreference(preference: string): Promise<void> {
-    console.warn(`Attempted to select audience preference '${preference}'. Locator for audience switcher not found in catalog. `);
-    // For demonstration, simulating action if it were available:
-    // await this.audienceSwitcherLocator.selectOption(preference);
+  async getEstimatedGasUse(): Promise<string> {
+    // This field is disabled, so we only retrieve its value, not interact.
+    return await this.estimatedGasUseInput.inputValue();
   }
 
   /**
-   * Retrieves the currently set audience preference.
-   * // TODO: Locator not found in catalog for audience preference display.
-   * @returns A promise that resolves to the current audience preference text.
+   * Navigates to the rate calculator page.
+   * Note: The base URL should be configured in Playwright config.
+   * Assuming a specific path for the calculator.
    */
-  async getAudiencePreference(): Promise<string> {
-    console.warn("Attempted to get audience preference. Locator for audience preference display not found in catalog.");
-    // For demonstration, simulating a returned value if it were available:
-    // return this.currentAudienceDisplayLocator.textContent() || '';
-    return Promise.resolve(''); // Return an empty string or throw an error to indicate absence
+  async navigateTo(): Promise<void> {
+    await this.page.goto('/rate-calculator'); // Placeholder path
+  }
+
+  /**
+   * Verifies the month dropdown's current selected value.
+   * @returns The value attribute of the currently selected option.
+   */
+  async getSelectedMonth(): Promise<string> {
+    return await this.monthDropdown.inputValue();
+  }
+
+  /**
+   * Verifies the previous read input's current value.
+   * @returns The value attribute of the input.
+   */
+  async getPreviousReadValue(): Promise<string> {
+    return await this.previousReadInput.inputValue();
+  }
+
+  /**
+   * Verifies the current read input's current value.
+   * @returns The value attribute of the input.
+   */
+  async getCurrentReadValue(): Promise<string> {
+    return await this.currentReadInput.inputValue();
+  }
+
+  /**
+   * Checks if the Electric Service radio button is selected.
+   * @returns True if selected, false otherwise.
+   */
+  async isElectricServiceSelected(): Promise<boolean> {
+    return await this.electricServiceRadio.isChecked();
+  }
+
+  /**
+   * Checks if the Electric and Gas Service radio button is selected.
+   * @returns True if selected, false otherwise.
+   */
+  async isElectricAndGasServiceSelected(): Promise<boolean> {
+    return await this.electricAndGasServiceRadio.isChecked();
   }
 }
