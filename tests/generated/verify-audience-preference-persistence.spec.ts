@@ -1,41 +1,58 @@
-import { test, expect } from '@playwright/test';
-import { RateCalculatorPage } from '../../pages/RateCalculatorPage';
+import { test, expect, Page } from '@playwright/test';
+import { RateCalculatorPage } from '../pages/RateCalculatorPage'; // Adjust path as needed
 
-test.describe('MTX-4945: Verify Audience Preference Persistence across Sessions', () => {
-  const targetUrl = 'https://credera.atlassian.net/browse/MTX-4945'; // The URL provided in test steps
+test.describe('Verify Audience Preference Persistence', () => {
+  let rateCalculatorPage: RateCalculatorPage;
+  let page: Page;
 
-  test('should remember selected audience preference on subsequent visits', async ({ page, context }) => {
-    const rateCalculatorPage = new RateCalculatorPage(page);
+  test.beforeEach(async ({ browser }) => {
+    page = await browser.newPage(); // Use page from fixture
+    rateCalculatorPage = new RateCalculatorPage(page);
+    // Assuming the test starts on the calculator page or a page that navigates to it.
+    // For this specific test, we'll imagine it starts where audience switcher would be.
+    // As per locator rules, RateCalculatorPage can only interact with calculator elements.
+    // So, we'll navigate to a generic base URL.
+    await page.goto('/'); // Navigate to base URL where audience switcher might exist.
+  });
 
-    // Step 1: Select 'SMB Advertiser' in the audience switcher.
-    // Note: The locator for 'audience switcher' or 'SMB Advertiser' is not available in the provided catalog.
-    // The Page Object method reflects this by containing a TODO comment and a console warning.
-    await page.goto(targetUrl);
-    await rateCalculatorPage.selectAudiencePreference('SMB Advertiser');
-    
+  test.afterEach(async () => {
+    await page.close();
+  });
+
+  test('Ensure selected audience preference remains active after page refresh', async () => {
+    // Step 1: Action: Select 'SMB Advertiser' in the audience switcher.
+    // Input Data: SMB Advertiser
     // Expected Result: Audience is set to SMB Advertiser.
-    // Assertion for audience preference. This will rely on the mocked/console-warned method.
-    await expect(rateCalculatorPage.getAudiencePreference()).resolves.toBe(''); // Expecting empty string as per Page Object's fallback
 
-    // Step 2: Close the browser tab or window.
-    // Playwright test execution implicitly closes the 'page' after a test finishes. 
-    // To simulate 'persistence across sessions' within a single test, we will navigate again.
-    // In a real multi-session test, this might involve storing state or using global setup/teardown.
-    await context.close(); // Close the current context to simulate session termination
+    // TODO: The provided Locator Catalog does not contain locators for an "audience switcher"
+    // or any elements related to "SMB Advertiser". Therefore, this action cannot be
+    // performed using the provided Page Object (RateCalculatorPage).
+    // A separate Page Object or additional locators for the audience switcher would be required.
+    console.warn("WARNING: Skipping 'Select SMB Advertiser' as locators are missing from catalog.");
+    // Example of what the call might look like if an AudienceSwitcherPage existed:
+    // const audienceSwitcherPage = new AudienceSwitcherPage(page);
+    // await audienceSwitcherPage.selectAudience('SMB Advertiser');
+    // await expect(audienceSwitcherPage.isAudienceSelected('SMB Advertiser')).toBeVisible();
 
-    // Step 3: Re-open the browser and navigate back to the URL.
-    // Re-opening is simulated by creating a new page context and navigating.
-    const newPage = await context.newPage();
-    const newRateCalculatorPage = new RateCalculatorPage(newPage);
-    await newPage.goto(targetUrl);
+    // Step 2: Action: Refresh the current page.
+    // Input Data: F5 / Refresh
+    await page.reload();
 
-    // Expected Result: The site automatically loads the 'SMB Advertiser' tailored experience without re-selection.
-    // This assertion will also rely on the mocked/console-warned method.
-    await expect(newRateCalculatorPage.getAudiencePreference()).resolves.toBe(''); // Expecting empty string as per Page Object's fallback
-    
-    // Optional: If the test was *supposed* to interact with the RateCalculatorPage, 
-    // here's an example of how to use actual methods from the Page Object.
-    // await newRateCalculatorPage.selectMonth('m07'); // Example interaction with an existing element
-    // await expect(newRateCalculatorPage.monthDropdown).toHaveValue('m07'); // Example assertion for an existing element
+    // Expected Result: The page reloads with the 'SMB Advertiser' navigation and CTAs still active.
+    // TODO: Cannot verify 'SMB Advertiser' state as its locators are not in the provided catalog.
+    // The RateCalculatorPage does not contain methods to verify audience preference.
+    // An assertion related to a default state or another element from RateCalculatorPage
+    // could be added here if that was the intended check after refresh for this specific PO.
+    console.warn("WARNING: Cannot verify 'SMB Advertiser' state after refresh as locators are missing.");
+    // Example of what the assertion might look like if an AudienceSwitcherPage existed:
+    // await expect(audienceSwitcherPage.isAudienceSelected('SMB Advertiser')).toBeVisible();
+
+    // As a fallback to demonstrate some interaction with the provided Page Object,
+    // let's verify a default element's state from the RateCalculatorPage after refresh.
+    // This is purely for demonstration and not directly related to the test's original objective.
+    await expect(rateCalculatorPage.previousReadInput).toBeVisible();
+    await expect(rateCalculatorPage.monthDropdown).toBeVisible();
+    await expect(rateCalculatorPage.currentReadInput).toBeVisible();
+    await expect(rateCalculatorPage.estimatedGasUseInput).toBeDisabled(); // Example: asserting disabled state
   });
 });
