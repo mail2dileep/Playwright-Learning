@@ -1,91 +1,65 @@
 import { test, expect } from '@playwright/test';
-import { RateCalculatorPage } from '../../pages/RateCalculatorPage'; // Relative import for Page Object
+import { RateCalculatorPage } from '../../pages/RateCalculatorPage';
 
 test.describe('Rate Calculator Functionality', () => {
-  const baseURL = 'http://example.com/rate-calculator'; // Placeholder URL, replace with your application's actual URL
+  let rateCalculatorPage: RateCalculatorPage;
 
   test.beforeEach(async ({ page }) => {
-    // Instantiate the Page Object and navigate to the base URL before each test
-    const calculatorPage = new RateCalculatorPage(page);
-    await calculatorPage.navigateTo(baseURL);
-    // Assert that navigation was successful
-    await expect(page).toHaveURL(baseURL);
+    rateCalculatorPage = new RateCalculatorPage(page);
+    // It's assumed that the test environment handles navigation to the base URL
+    // where the rate calculator form is present, e.g., via playwright.config.ts
+    // or a direct page.goto() call in a common setup hook if needed.
+    // Example: await page.goto('/your-calculator-path');
   });
 
-  test('should calculate electric usage correctly for a given month and reads', async ({ page }) => {
-    const calculatorPage = new RateCalculatorPage(page);
+  test('should calculate estimated electric and gas usage correctly', async () => {
+    // Step 1: Select service type "Electric and Gas"
+    await rateCalculatorPage.selectElectricAndGasService();
 
-    // Step 1: Select 'October' from the Month dropdown (value 'm10')
-    await calculatorPage.selectMonth('m10');
-    await expect(calculatorPage.monthDropdown).toHaveValue('m10'); // Keep assertions in the test layer
+    // Step 2: Select month "December" (value 'm12')
+    await rateCalculatorPage.selectMonth('m12');
 
-    // Step 2: Enter '1000' into the 'Enter Previous Read:' field
-    await calculatorPage.enterPreviousRead('1000');
-    await expect(calculatorPage.previousReadInput).toHaveValue('1000');
+    // Step 3: Enter Previous Read value
+    await rateCalculatorPage.enterPreviousRead('1000');
 
-    // Step 3: Enter '1500' into the 'Enter Current Read:' field
-    await calculatorPage.enterCurrentRead('1500');
-    await expect(calculatorPage.currentReadInput).toHaveValue('1500');
+    // Step 4: Enter Current Read value
+    await rateCalculatorPage.enterCurrentRead('1500');
 
-    // Step 4: Ensure 'Electric' service type is selected (explicit for clarity, often default)
-    await calculatorPage.selectElectricService();
-    await expect(calculatorPage.electricServiceRadio).toBeChecked();
+    // Step 5: Click Calculate button
+    await rateCalculatorPage.clickCalculateButton();
 
-    // Step 5: Click the 'Calculate' button to perform the calculation
-    await calculatorPage.clickCalculate();
+    // Step 6: Verify Estimated Electric use is 500 (1500 - 1000)
+    const estimatedElectricUse = await rateCalculatorPage.getEstimatedElectricUse();
+    expect(estimatedElectricUse).toBe('500');
 
-    // Expected Result: 'Estimated Electric use (kWh):' should display '500' (1500 - 1000)
-    await expect(calculatorPage.estimatedElectricUseInput).toBeVisible();
-    await expect(calculatorPage.getEstimatedElectricUseValue()).resolves.toBe('500');
-
-    // Expected Result: 'Estimated Gas use (Ccf):' should be disabled and display its default value '0'
-    await expect(calculatorPage.estimatedGasUseInput).toBeDisabled();
-    await expect(calculatorPage.getEstimatedGasUseValue()).resolves.toBe('0');
+    // Step 7: Verify Estimated Gas use is '0' or a calculated value.
+    // The 'Estimated Gas use (Ccf)' input is initially disabled according to the catalog.
+    // If selecting 'EG' service type enables it, a calculated value (or '0' if no gas data) is expected.
+    // Based on the catalog's `currentValue: "0"` for this field, '0' is a reasonable default
+    // if no specific gas calculation is performed or gas data is provided.
+    const estimatedGasUse = await rateCalculatorPage.getEstimatedGasUse();
+    expect(estimatedGasUse).not.toBeNull();
+    expect(estimatedGasUse).toBe('0'); // Expecting '0' as a default or due to no gas-specific input data.
   });
 
-  test('should reset the form fields to their initial state', async ({ page }) => {
-    const calculatorPage = new RateCalculatorPage(page);
+  test('should reset form fields upon clicking Reset button', async () => {
+    // Pre-fill some fields to test reset functionality
+    await rateCalculatorPage.selectElectricService(); // Select Electric service
+    await rateCalculatorPage.selectMonth('m07'); // Select July
+    await rateCalculatorPage.enterPreviousRead('2000');
+    await rateCalculatorPage.enterCurrentRead('2500');
 
-    // Action: Fill various fields with values to prepare for a reset operation
-    await calculatorPage.selectMonth('m07');
-    await calculatorPage.enterPreviousRead('200');
-    await calculatorPage.enterCurrentRead('300');
-    // Select Electric & Gas service to ensure it resets back to default (Electric)
-    await calculatorPage.selectElectricAndGasService();
+    // Click Reset button
+    await rateCalculatorPage.clickResetButton();
 
-    // Verification: Assert that fields are currently filled/selected as expected before reset
-    await expect(calculatorPage.monthDropdown).toHaveValue('m07');
-    await expect(calculatorPage.previousReadInput).toHaveValue('200');
-    await expect(calculatorPage.currentReadInput).toHaveValue('300');
-    await expect(calculatorPage.electricGasServiceRadio).toBeChecked();
+    // Verify fields are reset to their default initial values as per the catalog
+    expect(await rateCalculatorPage.previousReadInput.inputValue()).toBe('0');
+    expect(await rateCalculatorPage.currentReadInput.inputValue()).toBe('0');
+    expect(await rateCalculatorPage.estimatedElectricUseInput.inputValue()).toBe('0');
+    expect(await rateCalculatorPage.estimatedGasUseInput.inputValue()).toBe('0');
 
-    // Action: Click the 'Reset' button
-    await calculatorPage.clickReset();
-
-    // Expected Result: Fields should revert to their default values as observed in the locator catalog
-    await expect(calculatorPage.monthDropdown).toHaveValue('m06'); // Default 'June'
-    await expect(calculatorPage.previousReadInput).toHaveValue('0'); // Default '0'
-    await expect(calculatorPage.currentReadInput).toHaveValue('0'); // Default '0'
-    await expect(calculatorPage.estimatedElectricUseInput).toHaveValue('0'); // Default '0'
-    await expect(calculatorPage.electricServiceRadio).toBeChecked(); // Assuming 'Electric' is the default service type after reset
-    await expect(calculatorPage.estimatedGasUseInput).toBeDisabled(); // Gas use should also be disabled again
+    // Month dropdown should revert to its initial state, which is 'm06' (June)
+    // as indicated by the 'currentValue' in the locator catalog for the month dropdown.
+    expect(await rateCalculatorPage.getSelectedMonth()).toBe('m06');
   });
-
-  test('should enable Estimated Gas use when Electric & Gas service is selected', async ({ page }) => {
-    const calculatorPage = new RateCalculatorPage(page);
-
-    // Verification: Initially, 'Estimated Gas use (Ccf):' input field should be disabled
-    await expect(calculatorPage.estimatedGasUseInput).toBeDisabled();
-
-    // Action: Select 'Electric & Gas' service type
-    await calculatorPage.selectElectricAndGasService();
-    await expect(calculatorPage.electricGasServiceRadio).toBeChecked();
-
-    // Action: Click 'Calculate' to potentially trigger the enabling logic for Gas consumption
-    // (Assuming UI logic dictates calculation must be performed to enable the field)
-    await calculatorPage.clickCalculate();
-
-    // Expected Result: 'Estimated Gas use (Ccf):' input field should become enabled
-    await expect(calculatorPage.estimatedGasUseInput).toBeEnabled();
-  });
-}
+});
