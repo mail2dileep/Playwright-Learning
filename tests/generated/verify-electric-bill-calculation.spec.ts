@@ -1,75 +1,85 @@
 import { test, expect } from '@playwright/test';
-import { RateCalculatorPage } from '../../pages/RateCalculatorPage';
+import { CalculatorPage } from '../../pages/CalculatorPage';
 
-test.describe('Rate Calculator - Electric Bill Functionality', () => {
-    const TEST_URL = 'http://localhost:3000/rate-calculator'; // Placeholder URL
+test.describe('Electric Bill Calculator Functionality', () => {
+    let calculatorPage: CalculatorPage;
+    const testUrl = 'http://localhost:3000/calculator'; // Placeholder URL
 
-    test('should calculate electric bill correctly for specified reads in July', async ({ page }) => {
-        const rateCalculatorPage = new RateCalculatorPage(page);
-
-        // Step 1: Navigate to the Rate Calculator page
-        await rateCalculatorPage.navigateTo(TEST_URL);
-
-        // Step 2: Select 'July' as the billing month (value 'm07' from catalog)
-        await rateCalculatorPage.selectMonth('m07');
-
-        // Step 3: Enter previous meter read
-        await rateCalculatorPage.enterPreviousRead('1000');
-
-        // Step 4: Enter current meter read
-        await rateCalculatorPage.enterCurrentRead('1500');
-
-        // Step 5: Select 'Electric' service type
-        await rateCalculatorPage.selectElectricService();
-
-        // Step 6: Click 'Calculate' button
-        await rateCalculatorPage.clickCalculate();
-
-        // Step 7: Verify estimated electric use (1500 - 1000 = 500)
-        const estimatedElectricUse = await rateCalculatorPage.getEstimatedElectricUse();
-        await expect(estimatedElectricUse).toBe('500');
-
-        // Step 8: Verify estimated gas use is disabled and 0 as only electric was selected
-        const isGasUseDisabled = await rateCalculatorPage.isEstimatedGasUseDisabled();
-        expect(isGasUseDisabled).toBe(true); // Estimated Gas Use (Ccf) field is disabled
-        const estimatedGasUse = await rateCalculatorPage.getEstimatedGasUse();
-        await expect(estimatedGasUse).toBe('0');
+    test.beforeEach(async ({ page }) => {
+        calculatorPage = new CalculatorPage(page);
+        await calculatorPage.navigateTo(testUrl);
     });
 
-    test('should reset all form fields to default values', async ({ page }) => {
-        const rateCalculatorPage = new RateCalculatorPage(page);
+    test('should successfully calculate electric bill for selected month and readings', async () => {
+        const month = 'm10'; // October
+        const previousRead = '1000';
+        const currentRead = '1500';
+        const expectedElectricConsumption = '500'; // 1500 - 1000
 
-        await rateCalculatorPage.navigateTo(TEST_URL);
-        
-        // Populate fields with non-default values to ensure reset works
-        await rateCalculatorPage.selectMonth('m07'); // Select July, default is June (m06)
-        await rateCalculatorPage.enterPreviousRead('123'); // Default is '0'
-        await rateCalculatorPage.enterCurrentRead('456');   // Default is '0'
-        await rateCalculatorPage.selectElectricAndGasService(); // Default is likely 'Electric' or none
+        // Step 1: Select Month
+        await calculatorPage.selectMonth(month);
+        await expect(calculatorPage.page.getByLabel('Month')).toHaveValue(month);
 
-        // Click 'Reset' button
-        await rateCalculatorPage.clickReset();
+        // Step 2: Enter Previous Read
+        await calculatorPage.enterPreviousRead(previousRead);
+        await expect(calculatorPage.page.getByLabel('Enter Previous Read:')).toHaveValue(previousRead);
 
-        // Verify fields are reset to their default currentValues from the catalog
-        const selectedMonth = await rateCalculatorPage.getSelectedMonthValue();
-        await expect(selectedMonth).toBe('m06'); // Default month is June
+        // Step 3: Enter Current Read
+        await calculatorPage.enterCurrentRead(currentRead);
+        await expect(calculatorPage.page.getByLabel('Enter Current Read:')).toHaveValue(currentRead);
 
-        const previousReadValue = await rateCalculatorPage.getPreviousReadValue();
-        await expect(previousReadValue).toBe('0'); // Default value for Previous Read
+        // Step 4: Select Electric Service Type
+        await calculatorPage.selectElectricService();
+        await expect(calculatorPage.page.locator('#e')).toBeChecked();
+        await expect(calculatorPage.page.locator('#eg')).not.toBeChecked();
 
-        const currentReadValue = await rateCalculatorPage.getCurrentReadValue();
-        await expect(currentReadValue).toBe('0');   // Default value for Current Read
+        // Step 5: Verify Estimated Gas Use is Disabled before calculation (if 'E' is selected)
+        expect(await calculatorPage.isEstimatedGasUseDisabled()).toBe(true);
+        await expect(calculatorPage.page.getByLabel('Estimated Gas use (Ccf):')).toBeDisabled();
 
-        const estimatedElectricUseValue = await rateCalculatorPage.getEstimatedElectricUse();
-        await expect(estimatedElectricUseValue).toBe('0'); // Default value for Estimated Electric use
+        // Step 6: Click Calculate
+        await calculatorPage.clickCalculate();
 
-        const estimatedGasUseValue = await rateCalculatorPage.getEstimatedGasUse();
-        await expect(estimatedGasUseValue).toBe('0');      // Default value for Estimated Gas use
+        // Step 7: Verify Estimated Electric Use
+        const actualElectricConsumption = await calculatorPage.getEstimatedElectricUse();
+        expect(actualElectricConsumption).toBe(expectedElectricConsumption);
+        await expect(calculatorPage.page.getByLabel('Estimated Electric use (kWh):')).toHaveValue(expectedElectricConsumption);
 
-        const isElectricServiceChecked = await rateCalculatorPage.isElectricServiceSelected();
-        await expect(isElectricServiceChecked).toBe(false); // Assuming reset clears radio selection
+        // Step 8: Verify Estimated Gas Use remains disabled and '0'
+        expect(await calculatorPage.isEstimatedGasUseDisabled()).toBe(true);
+        expect(await calculatorPage.getEstimatedGasUse()).toBe('0');
+        await expect(calculatorPage.page.getByLabel('Estimated Gas use (Ccf):')).toBeDisabled();
+        await expect(calculatorPage.page.getByLabel('Estimated Gas use (Ccf):')).toHaveValue('0');
+    });
 
-        const isElectricAndGasServiceChecked = await rateCalculatorPage.isElectricAndGasServiceSelected();
-        await expect(isElectricAndGasServiceChecked).toBe(false); // Assuming reset clears radio selection
+    test('should reset form fields when reset button is clicked', async () => {
+        // Fill some fields first
+        await calculatorPage.selectMonth('m12');
+        await calculatorPage.enterPreviousRead('200');
+        await calculatorPage.enterCurrentRead('300');
+        await calculatorPage.selectElectricAndGasService();
+
+        // Verify fields are filled
+        await expect(calculatorPage.page.getByLabel('Month')).toHaveValue('m12');
+        await expect(calculatorPage.page.getByLabel('Enter Previous Read:')).toHaveValue('200');
+        await expect(calculatorPage.page.getByLabel('Enter Current Read:')).toHaveValue('300');
+        await expect(calculatorPage.page.locator('#eg')).toBeChecked();
+
+        // Click Reset
+        await calculatorPage.clickReset();
+
+        // Verify fields are reset to initial values (default month 'm06', 0 for reads)
+        await expect(calculatorPage.page.getByLabel('Month')).toHaveValue('m06');
+        await expect(calculatorPage.page.getByLabel('Enter Previous Read:')).toHaveValue('0');
+        await expect(calculatorPage.page.getByLabel('Enter Current Read:')).toHaveValue('0');
+        await expect(calculatorPage.page.getByLabel('Estimated Electric use (kWh):')).toHaveValue('0');
+        await expect(calculatorPage.page.getByLabel('Estimated Gas use (Ccf):')).toHaveValue('0');
+
+        // After reset, 'Electric' service radio should be selected as default
+        await expect(calculatorPage.page.locator('#e')).toBeChecked();
+        await expect(calculatorPage.page.locator('#eg')).not.toBeChecked();
+
+        // After reset, Estimated Gas Use should be disabled again
+        expect(await calculatorPage.isEstimatedGasUseDisabled()).toBe(true);
     });
 });
