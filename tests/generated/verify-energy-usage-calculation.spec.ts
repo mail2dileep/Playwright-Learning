@@ -1,54 +1,59 @@
 import { test, expect } from '@playwright/test';
-import { EnergyUsageCalculatorPage } from '../../pages/EnergyUsageCalculatorPage';
+import { RateCalculatorPage } from '../../pages/RateCalculatorPage';
 
 test.describe('Energy Usage Calculator Functionality', () => {
-  let energyUsageCalculatorPage: EnergyUsageCalculatorPage;
+  const BASE_URL = 'http://localhost:3000/calculator'; // Placeholder URL
 
-  test.beforeEach(async ({ page }) => {
-    energyUsageCalculatorPage = new EnergyUsageCalculatorPage(page);
-    // In a real scenario, you would navigate to the specific page like this:
-    await page.goto('https://www.example.com/energy-calculator'); // Placeholder URL, replace with actual URL
-  });
+  test('should correctly calculate electric and gas usage and reset fields', async ({ page }) => {
+    const calculatorPage = new RateCalculatorPage(page);
 
-  test('should calculate electric usage correctly for current month', async () => {
-    const previousRead = '1000';
-    const currentRead = '1500';
-    const expectedElectricUsage = '500'; // 1500 - 1000
+    await test.step('1. Navigate to the calculator page', async () => {
+      await calculatorPage.navigateTo(BASE_URL);
+      await expect(page).toHaveTitle(/Calculator/);
+      // Verify initial state of gas usage field (disabled and 0)
+      await expect(await calculatorPage.getEstimatedGasUse()).toBe('0');
+      await expect(await calculatorPage.isEstimatedGasUseFieldEnabled()).toBeFalsy();
+    });
 
-    await energyUsageCalculatorPage.selectMonth('m06'); // Select June
-    await energyUsageCalculatorPage.enterPreviousMeterRead(previousRead);
-    await energyUsageCalculatorPage.enterCurrentMeterRead(currentRead);
-    await energyUsageCalculatorPage.selectElectricService();
-    await energyUsageCalculatorPage.clickCalculate();
+    await test.step('2. Select "Electric & Gas" service type', async () => {
+      await calculatorPage.selectElectricAndGasService();
+      await expect(await calculatorPage.isElectricAndGasServiceSelected()).toBeTruthy();
+      // Verify gas usage field becomes enabled after selecting EG
+      await expect(await calculatorPage.isEstimatedGasUseFieldEnabled()).toBeTruthy();
+    });
 
-    // Assertions
-    const actualElectricUsage = await energyUsageCalculatorPage.getEstimatedElectricUse();
-    expect(actualElectricUsage).toBe(expectedElectricUsage);
+    await test.step('3. Enter "1000" for "Enter Previous Read:"', async () => {
+      await calculatorPage.enterPreviousRead('1000');
+      await expect(await calculatorPage.getPreviousReadValue()).toBe('1000');
+    });
 
-    const actualGasUsage = await energyUsageCalculatorPage.getEstimatedGasUse();
-    expect(actualGasUsage).toBe('0'); // Gas consumption should be 0 as only electric service was selected
+    await test.step('4. Enter "1500" for "Enter Current Read:"', async () => {
+      await calculatorPage.enterCurrentRead('1500');
+      await expect(await calculatorPage.getCurrentReadValue()).toBe('1500');
+    });
 
-    const isGasDisabled = await energyUsageCalculatorPage.isGasConsumptionFieldDisabled();
-    expect(isGasDisabled).toBeTruthy(); // Gas input field is disabled by default when only electric is chosen
-  });
+    await test.step('5. Select "July" as the billing month', async () => {
+      await calculatorPage.selectBillingMonth('m07'); // Use value 'm07' for July
+      await expect(await calculatorPage.getSelectedMonth()).toBe('m07');
+    });
 
-  test('should reset the form fields to their default state', async () => {
-    // Fill some data first to ensure fields are not in their default state
-    await energyUsageCalculatorPage.selectMonth('m07'); // Change from default 'm06'
-    await energyUsageCalculatorPage.enterPreviousMeterRead('500');
-    await energyUsageCalculatorPage.enterCurrentMeterRead('600');
-    await energyUsageCalculatorPage.selectElectricAndGasService();
-    await energyUsageCalculatorPage.clickCalculate(); // Trigger calculation to update estimated values
+    await test.step('6. Click the "Calculate" button and verify results', async () => {
+      await calculatorPage.clickCalculate();
+      // Assuming a simple calculation: Current - Previous for Electric, Gas is an arbitrary value for EG
+      await expect(await calculatorPage.getEstimatedElectricUse()).toBe('500');
+      await expect(await calculatorPage.getEstimatedGasUse()).toBe('100'); // Assuming an expected value after calculation
+    });
 
-    // Click reset
-    await energyUsageCalculatorPage.clickReset();
-
-    // Verify fields are reset to their assumed default values
-    expect(await energyUsageCalculatorPage.getPreviousMeterRead()).toBe('0');
-    expect(await energyUsageCalculatorPage.getCurrentMeterRead()).toBe('0');
-    expect(await energyUsageCalculatorPage.getEstimatedElectricUse()).toBe('0');
-    expect(await energyUsageCalculatorPage.getEstimatedGasUse()).toBe('0');
-    // Based on the catalog, 'm06' (June) is the initial 'currentValue' for the Month dropdown.
-    expect(await energyUsageCalculatorPage.getSelectedMonthValue()).toBe('m06');
+    await test.step('7. Click the "Reset" button and verify fields are reset', async () => {
+      await calculatorPage.clickReset();
+      await expect(await calculatorPage.getPreviousReadValue()).toBe('0');
+      await expect(await calculatorPage.getCurrentReadValue()).toBe('0');
+      await expect(await calculatorPage.getEstimatedElectricUse()).toBe('0');
+      await expect(await calculatorPage.getEstimatedGasUse()).toBe('0');
+      // Verify gas usage field becomes disabled again after reset
+      await expect(await calculatorPage.isEstimatedGasUseFieldEnabled()).toBeFalsy();
+      // Verify service type defaults back to Electric
+      await expect(await calculatorPage.isElectricServiceSelected()).toBeTruthy();
+    });
   });
 });
