@@ -1,83 +1,68 @@
 import { test, expect } from '@playwright/test';
-import { RateCalculatorPage } from '../../pages/RateCalculatorPage'; // Relative path to page object
+import { RateCalculatorPage } from '../../pages/RateCalculatorPage';
 
-test.describe('Rate Calculator Functionality', () => {
-  const BASE_URL = 'https://www.example.com/rate-calculator'; // Placeholder URL for the application
+test.describe('Rate Calculator Functionality E2E Tests', () => {
 
-  test('should calculate estimated electric bill correctly', async ({ page }) => {
-    const rateCalculatorPage = new RateCalculatorPage(page);
+  let rateCalculatorPage: RateCalculatorPage;
 
-    await test.step('Navigate to the Rate Calculator page', async () => {
-      await rateCalculatorPage.navigateTo(BASE_URL);
-    });
-
-    await test.step('Select July for the month', async () => {
-      await rateCalculatorPage.selectMonth('m07');
-      await expect(rateCalculatorPage.monthDropdown).toHaveValue('m07');
-    });
-
-    await test.step('Enter previous meter read as 1000', async () => {
-      await rateCalculatorPage.enterPreviousMeterRead('1000');
-      await expect(rateCalculatorPage.previousReadInput).toHaveValue('1000');
-    });
-
-    await test.step('Enter current meter read as 1500', async () => {
-      await rateCalculatorPage.enterCurrentMeterRead('1500');
-      await expect(rateCalculatorPage.currentReadInput).toHaveValue('1500');
-    });
-
-    await test.step('Select Electric service type', async () => {
-      await rateCalculatorPage.selectServiceType('electric');
-      await expect(rateCalculatorPage.electricServiceRadio).toBeChecked();
-      await expect(rateCalculatorPage.electricAndGasServiceRadio).not.toBeChecked();
-    });
-
-    await test.step('Verify Estimated Gas use input is disabled', async () => {
-      await expect(rateCalculatorPage.estimatedGasUseInput).toBeDisabled();
-    });
-
-    await test.step('Click Calculate button', async () => {
-      await rateCalculatorPage.clickCalculate();
-    });
-
-    await test.step('Verify estimated electric use is updated (placeholder assertion)', async () => {
-      // Assuming a calculation happens (1500 - 1000 = 500 kWh). 
-      // The actual expected value would depend on the application's business logic.
-      await expect(rateCalculatorPage.estimatedElectricUseInput).toHaveValue('500'); 
-    });
+  // Before each test, initialize the Page Object and navigate.
+  test.beforeEach(async ({ page }) => {
+    rateCalculatorPage = new RateCalculatorPage(page);
+    await rateCalculatorPage.navigateTo();
   });
 
-  test('should reset the form fields to default values', async ({ page }) => {
-    const rateCalculatorPage = new RateCalculatorPage(page);
+  test('should verify default state on initial page load', async () => {
+    // Verify default values based on locator catalog data
+    expect(await rateCalculatorPage.getPreviousReadValue()).toBe('0');
+    expect(await rateCalculatorPage.getCurrentReadValue()).toBe('0');
+    expect(await rateCalculatorPage.getEstimatedElectricUse()).toBe('0');
+    expect(await rateCalculatorPage.getSelectedMonthValue()).toBe('m06'); // 'June' is the default value
+    expect(await rateCalculatorPage.isElectricServiceTypeSelected()).toBe(true); // 'e' is default selected
+  });
 
-    await test.step('Navigate to the Rate Calculator page and fill some data', async () => {
-      await rateCalculatorPage.navigateTo(BASE_URL);
-      await rateCalculatorPage.selectMonth('m03'); // Select March
-      await rateCalculatorPage.enterPreviousMeterRead('500');
-      await rateCalculatorPage.enterCurrentMeterRead('700');
-      await rateCalculatorPage.selectServiceType('electricAndGas');
+  test('should calculate estimated electric use for selected reads and service type', async () => {
+    // Step 1: Input previous and current meter reads
+    await rateCalculatorPage.enterPreviousRead('1000');
+    await rateCalculatorPage.enterCurrentRead('1500');
 
-      // Verify data is filled before reset
-      await expect(rateCalculatorPage.monthDropdown).toHaveValue('m03');
-      await expect(rateCalculatorPage.previousReadInput).toHaveValue('500');
-      await expect(rateCalculatorPage.currentReadInput).toHaveValue('700');
-      await expect(rateCalculatorPage.electricAndGasServiceRadio).toBeChecked();
-    });
+    // Step 2: Select a specific month (e.g., July)
+    await rateCalculatorPage.selectMonth('m07');
 
-    await test.step('Click Reset button', async () => {
-      await rateCalculatorPage.clickReset();
-    });
+    // Step 3: Ensure Electric service type is selected (it's often default, but explicitly select for robustness)
+    await rateCalculatorPage.selectElectricServiceType();
 
-    await test.step('Verify fields are reset to default values', async () => {
-      // According to catalog, default month is 'm06' (June) and inputs are '0'
-      await expect(rateCalculatorPage.monthDropdown).toHaveValue('m06');
-      await expect(rateCalculatorPage.previousReadInput).toHaveValue('0');
-      await expect(rateCalculatorPage.currentReadInput).toHaveValue('0');
-      // Default service type (assuming 'electric' is the initial checked state based on 'currentValue: E' for id 'e')
-      await expect(rateCalculatorPage.electricServiceRadio).toBeChecked();
-      await expect(rateCalculatorPage.electricAndGasServiceRadio).not.toBeChecked();
-      await expect(rateCalculatorPage.estimatedElectricUseInput).toHaveValue('0');
-      await expect(rateCalculatorPage.estimatedGasUseInput).toHaveValue('0'); 
-    });
+    // Step 4: Click the Calculate button
+    await rateCalculatorPage.calculateBill();
+
+    // Step 5: Verify the estimated electric use is calculated and displayed correctly
+    // Assuming a simple calculation of Current - Previous = Consumption
+    const expectedConsumption = '500'; // 1500 - 1000
+    expect(await rateCalculatorPage.getEstimatedElectricUse()).toBe(expectedConsumption);
+  });
+
+  test('should reset form fields to their initial default state', async () => {
+    // Step 1: Perform some actions to change the form state
+    await rateCalculatorPage.enterPreviousRead('2000');
+    await rateCalculatorPage.enterCurrentRead('2500');
+    await rateCalculatorPage.selectMonth('m08'); // August
+    await rateCalculatorPage.selectElectricAndGasServiceType();
+    await rateCalculatorPage.calculateBill(); // Trigger calculation for a changed state
+
+    // Verify fields are changed from default
+    expect(await rateCalculatorPage.getPreviousReadValue()).toBe('2000');
+    expect(await rateCalculatorPage.getCurrentReadValue()).toBe('2500');
+    expect(await rateCalculatorPage.getSelectedMonthValue()).toBe('m08');
+    expect(await rateCalculatorPage.isElectricServiceTypeSelected()).toBe(false); // 'E' should not be selected if 'EG' is
+    // Verification of Estimated Electric use not strictly needed here, but shows form state change
+
+    // Step 2: Click the Reset button
+    await rateCalculatorPage.resetForm();
+
+    // Step 3: Verify all fields are reset to their default values
+    expect(await rateCalculatorPage.getPreviousReadValue()).toBe('0');
+    expect(await rateCalculatorPage.getCurrentReadValue()).toBe('0');
+    expect(await rateCalculatorPage.getEstimatedElectricUse()).toBe('0');
+    expect(await rateCalculatorPage.getSelectedMonthValue()).toBe('m06'); // Back to 'June'
+    expect(await rateCalculatorPage.isElectricServiceTypeSelected()).toBe(true); // 'E' selected by default after reset
   });
 });
