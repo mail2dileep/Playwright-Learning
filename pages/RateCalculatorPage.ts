@@ -3,24 +3,21 @@ import { Page, Locator } from '@playwright/test';
 export class RateCalculatorPage {
   private readonly page: Page;
 
-  // Locators are declared as public readonly to allow assertions in the test spec
-  // while strictly adhering to "Keep assertions in the test layer" and not including
-  // expect() statements within the Page Object methods.
-  public readonly monthDropdown: Locator;
-  public readonly previousReadInput: Locator;
-  public readonly currentReadInput: Locator;
-  public readonly estimatedElectricUseInput: Locator;
-  public readonly estimatedGasUseInput: Locator;
-  public readonly electricServiceTypeRadio: Locator;
-  public readonly electricAndGasServiceTypeRadio: Locator;
-  public readonly howToReadYourBillButton: Locator;
-  public readonly howToFindUsageButton: Locator;
-  public readonly resetButton: Locator;
-  public readonly calculateButton: Locator;
+  // Locators
+  private readonly monthDropdown: Locator;
+  private readonly previousReadInput: Locator;
+  private readonly currentReadInput: Locator;
+  private readonly estimatedElectricUseInput: Locator;
+  private readonly estimatedGasUseInput: Locator;
+  private readonly electricServiceTypeRadio: Locator;
+  private readonly electricGasServiceTypeRadio: Locator;
+  private readonly calculateButton: Locator;
+  private readonly resetButton: Locator;
+  private readonly howToReadYourBillButton: Locator;
+  private readonly howToFindUsageButton: Locator;
 
   constructor(page: Page) {
     this.page = page;
-
     // Initialize locators using recommendedLocator from catalog
     this.monthDropdown = page.getByLabel('Month');
     this.previousReadInput = page.getByLabel('Enter Previous Read:');
@@ -28,78 +25,145 @@ export class RateCalculatorPage {
     this.estimatedElectricUseInput = page.getByLabel('Estimated Electric use (kWh):');
     this.estimatedGasUseInput = page.getByLabel('Estimated Gas use (Ccf):');
     this.electricServiceTypeRadio = page.locator('#e');
-    this.electricAndGasServiceTypeRadio = page.locator('#eg');
+    this.electricGasServiceTypeRadio = page.locator('#eg');
+    this.calculateButton = page.locator('#validateMoveInBtn');
+    this.resetButton = page.locator('#rateCalCancelBtn');
     this.howToReadYourBillButton = page.locator('#howToReadYourBillBtn');
     this.howToFindUsageButton = page.locator('#howToFindUsageBtn');
-    this.resetButton = page.locator('#rateCalCancelBtn');
-    this.calculateButton = page.locator('#validateMoveInBtn');
   }
 
   /**
    * Navigates to the rate calculator page.
-   * @param url The URL of the rate calculator page.
+   * This is a placeholder as the actual URL was not provided. Default to '/rate-calculator'.
+   * Ensure baseURL is configured in playwright.config.ts or passed in the test.
    */
-  async navigateTo(url: string): Promise<void> {
-    await this.page.goto(url);
+  async navigateTo(path: string = '/rate-calculator'): Promise<void> {
+    await this.page.goto(path);
   }
 
   /**
-   * Selects a month from the month dropdown.
-   * @param monthValue The 'value' attribute of the month option (e.g., 'm08' for August).
+   * Selects a month from the dropdown.
+   * @param monthValue The value attribute of the month option (e.g., 'm07' for July).
    */
   async selectMonth(monthValue: string): Promise<void> {
     await this.monthDropdown.selectOption(monthValue);
   }
 
   /**
-   * Enters the previous and current meter readings.
-   * @param previousRead The value for the previous meter read input.
-   * @param currentRead The value for the current meter read input.
+   * Enters the previous meter read value.
+   * @param readValue The previous meter reading.
    */
-  async enterMeterReads(previousRead: string, currentRead: string): Promise<void> {
-    await this.previousReadInput.fill(previousRead);
-    await this.currentReadInput.fill(currentRead);
+  async enterPreviousRead(readValue: string): Promise<void> {
+    await this.previousReadInput.fill(readValue);
   }
 
   /**
-   * Selects the service type radio button.
-   * @param type 'electric' for Electric service, 'electricAndGas' for Electric and Gas service.
+   * Enters the current meter read value.
+   * @param readValue The current meter reading.
    */
-  async selectServiceType(type: 'electric' | 'electricAndGas'): Promise<void> {
-    if (type === 'electric') {
-      await this.electricServiceTypeRadio.check();
-    } else if (type === 'electricAndGas') {
-      await this.electricAndGasServiceTypeRadio.check();
-    } else {
-      throw new Error(`Invalid service type: ${type}`);
-    }
+  async enterCurrentRead(readValue: string): Promise<void> {
+    await this.currentReadInput.fill(readValue);
   }
 
   /**
-   * Clicks the 'Calculate' button.
+   * Selects the Electric service type radio button.
+   */
+  async selectElectricServiceType(): Promise<void> {
+    await this.electricServiceTypeRadio.check();
+  }
+
+  /**
+   * Selects the Electric and Gas service type radio button.
+   */
+  async selectElectricAndGasServiceType(): Promise<void> {
+    await this.electricGasServiceTypeRadio.check();
+  }
+
+  /**
+   * Clicks the Calculate button to submit the meter readings.
    */
   async clickCalculate(): Promise<void> {
     await this.calculateButton.click();
   }
 
   /**
-   * Clicks the 'Reset' button.
+   * Clicks the Reset button.
    */
   async clickReset(): Promise<void> {
     await this.resetButton.click();
   }
 
+  // --- Methods to retrieve Locators for assertions in the test spec --- //
+
   /**
-   * Clicks the 'How to Read Your Bill' button.
+   * Returns the Locator for the Month dropdown.
+   * Useful for assertions like toHaveValue().
    */
-  async clickHowToReadYourBill(): Promise<void> {
-    await this.howToReadYourBillButton.click();
+  getMonthDropdownLocator(): Locator {
+    return this.monthDropdown;
   }
 
   /**
-   * Clicks the 'How to Find Usage' button.
+   * Returns the Locator for the Previous Read input field.
+   * Useful for assertions like toHaveValue().
    */
-  async clickHowToFindUsage(): Promise<void> {
-    await this.howToFindUsageButton.click();
+  getPreviousReadInputLocator(): Locator {
+    return this.previousReadInput;
+  }
+
+  /**
+   * Returns the Locator for the Current Read input field.
+   * Useful for assertions like toHaveValue().
+   */
+  getCurrentReadInputLocator(): Locator {
+    return this.currentReadInput;
+  }
+
+  /**
+   * Returns the Locator for the Estimated Electric use (kWh) input field.
+   * Useful for assertions like toHaveValue().
+   */
+  getEstimatedElectricUseLocator(): Locator {
+    return this.estimatedElectricUseInput;
+  }
+
+  /**
+   * Returns the Locator for the Estimated Gas use (Ccf) input field.
+   * Useful for assertions like toHaveValue() or toBeDisabled().
+   */
+  getEstimatedGasUseLocator(): Locator {
+    return this.estimatedGasUseInput;
+  }
+
+  /**
+   * Returns the Locator for the Electric service type radio button.
+   * Useful for assertions like toBeChecked().
+   */
+  getElectricServiceTypeRadioLocator(): Locator {
+    return this.electricServiceTypeRadio;
+  }
+
+  /**
+   * Returns the Locator for the Electric and Gas service type radio button.
+   * Useful for assertions like toBeChecked().
+   */
+  getElectricAndGasServiceTypeRadioLocator(): Locator {
+    return this.electricGasServiceTypeRadio;
+  }
+
+  /**
+   * Returns the Locator for the Calculate button.
+   * Useful for assertions like toBeEnabled() or toBeDisabled().
+   */
+  getCalculateButtonLocator(): Locator {
+    return this.calculateButton;
+  }
+
+  /**
+   * Returns the Locator for the Reset button.
+   * Useful for assertions like toBeEnabled() or toBeDisabled().
+   */
+  getResetButtonLocator(): Locator {
+    return this.resetButton;
   }
 }
