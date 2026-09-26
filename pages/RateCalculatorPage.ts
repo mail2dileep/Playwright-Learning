@@ -1,1 +1,114 @@
-import { Page, Locator } from '@playwright/test';\n\nexport class RateCalculatorPage {\n  private readonly page: Page;\n  private readonly monthDropdown: Locator;\n  private readonly previousMeterReadInput: Locator;\n  private readonly currentMeterReadInput: Locator;\n  private readonly estimatedElectricUseInput: Locator;\n  private readonly estimatedGasUseInput: Locator;\n  private readonly electricServiceRadio: Locator;\n  private readonly electricAndGasServiceRadio: Locator;\n  private readonly calculateButton: Locator;\n  private readonly resetButton: Locator;\n  private readonly howToReadYourBillButton: Locator;\n  private readonly howToFindUsageButton: Locator;\n\n  constructor(page: Page) {\n    this.page = page;\n    this.monthDropdown = page.getByLabel('Month');\n    this.previousMeterReadInput = page.getByLabel('Enter Previous Read:');\n    this.currentMeterReadInput = page.getByLabel('Enter Current Read:');\n    this.estimatedElectricUseInput = page.getByLabel('Estimated Electric use (kWh):');\n    this.estimatedGasUseInput = page.getByLabel('Estimated Gas use (Ccf):');\n    this.electricServiceRadio = page.locator('#e');\n    this.electricAndGasServiceRadio = page.locator('#eg');\n    this.calculateButton = page.locator('#validateMoveInBtn');\n    this.resetButton = page.locator('#rateCalCancelBtn');\n    this.howToReadYourBillButton = page.locator('#howToReadYourBillBtn');\n    this.howToFindUsageButton = page.locator('#howToFindUsageBtn');\n  }\n\n  /**\n   * Navigates to the rate calculator page.\n   * @param url The URL of the rate calculator page.\n   */\n  async navigate(url: string): Promise<void> {\n    await this.page.goto(url);\n  }\n\n  /**\n   * Selects a month from the dropdown list.\n   * @param monthValue The value of the month to select (e.g., 'm07' for July).\n   */\n  async selectMonth(monthValue: string): Promise<void> {\n    await this.monthDropdown.selectOption(monthValue);\n  }\n\n  /**\n   * Enters the previous meter read value.\n   * @param read The previous meter read as a string.\n   */\n  async enterPreviousMeterRead(read: string): Promise<void> {\n    await this.previousMeterReadInput.fill(read);\n  }\n\n  /**\n   * Enters the current meter read value.\n   * @param read The current meter read as a string.\n   */\n  async enterCurrentMeterRead(read: string): Promise<void> {\n    await this.currentMeterReadInput.fill(read);\n  }\n\n  /**\n   * Selects the 'Electric' service type radio button.\n   */\n  async selectElectricServiceType(): Promise<void> {\n    await this.electricServiceRadio.click();\n  }\n\n  /**\n   * Selects the 'Electric and Gas' service type radio button.\n   */\n  async selectElectricAndGasServiceType(): Promise<void> {\n    await this.electricAndGasServiceRadio.click();\n  }\n\n  /**\n   * Clicks the 'Calculate' button to compute usage.\n   */\n  async clickCalculateButton(): Promise<void> {\n    await this.calculateButton.click();\n  }\n\n  /**\n   * Clicks the 'Reset' button to clear form fields.\n   */\n  async clickResetButton(): Promise<void> {\n    await this.resetButton.click();\n  }\n\n  /**\n   * Clicks the 'How to Read Your Bill' button.\n   */\n  async clickHowToReadYourBillButton(): Promise<void> {\n    await this.howToReadYourBillButton.click();\n  }\n\n  /**\n   * Clicks the 'How to Find Usage' button.\n   */\n  async clickHowToFindUsageButton(): Promise<void> {\n    await this.howToFindUsageButton.click();\n  }\n\n  /**\n   * Retrieves the value of the currently selected month from the dropdown.\n   * @returns The value of the selected month, or null if nothing is selected.\n   */\n  async getSelectedMonthValue(): Promise<string | null> {\n    return this.monthDropdown.inputValue();\n  }\n\n  /**\n   * Retrieves the value from the previous meter read input field.\n   * @returns The previous meter read as a string.\n   */\n  async getPreviousMeterRead(): Promise<string> {\n    return this.previousMeterReadInput.inputValue();\n  }\n\n  /**\n   * Retrieves the value from the current meter read input field.\n   * @returns The current meter read as a string.\n   */\n  async getCurrentMeterRead(): Promise<string> {\n    return this.currentMeterReadInput.inputValue();\n  }\n\n  /**\n   * Retrieves the estimated electric use value from its input field.\n   * @returns The estimated electric use as a string.\n   */\n  async getEstimatedElectricUse(): Promise<string> {\n    return this.estimatedElectricUseInput.inputValue();\n  }\n\n  /**\n   * Checks if the estimated gas use input field is disabled.\n   * @returns True if the field is disabled, false otherwise.\n   */\n  async isEstimatedGasUseInputDisabled(): Promise<boolean> {\n    return this.estimatedGasUseInput.isDisabled();\n  }\n\n  /**\n   * Checks if the 'Electric' service type radio button is selected.\n   * @returns True if selected, false otherwise.\n   */\n  async isElectricServiceTypeSelected(): Promise<boolean> {\n    return this.electricServiceRadio.isChecked();\n  }\n\n  /**\n   * Checks if the 'Electric and Gas' service type radio button is selected.\n   * @returns True if selected, false otherwise.\n   */\n  async isElectricAndGasServiceTypeSelected(): Promise<boolean> {\n    return this.electricAndGasServiceRadio.isChecked();\n  }\n\n  /**\n   * Performs a complete workflow to calculate electric usage.\n   * @param monthValue The value of the month to select.\n   * @param previousRead The previous meter read.\n   * @param currentRead The current meter read.\n   */\n  async calculateElectricUsage(\n    monthValue: string,\n    previousRead: string,\n    currentRead: string\n  ): Promise<void> {\n    await this.selectMonth(monthValue);\n    await this.enterPreviousMeterRead(previousRead);\n    await this.enterCurrentMeterRead(currentRead);\n    await this.selectElectricServiceType();\n    await this.clickCalculateButton();\n  }\n}
+import { Page, Locator } from '@playwright/test';
+
+export class RateCalculatorPage {
+  public readonly monthDropdown: Locator;
+  public readonly previousReadInput: Locator;
+  public readonly currentReadInput: Locator;
+  public readonly estimatedElectricUseInput: Locator;
+  public readonly estimatedGasUseInput: Locator;
+  public readonly electricOnlyRadio: Locator;
+  public readonly electricAndGasRadio: Locator;
+  public readonly calculateButton: Locator;
+  public readonly resetButton: Locator;
+  public readonly howToReadYourBillButton: Locator;
+  public readonly howToFindUsageButton: Locator;
+
+  constructor(private page: Page) {
+    this.monthDropdown = page.getByLabel('Month');
+    this.previousReadInput = page.getByLabel('Enter Previous Read:');
+    this.currentReadInput = page.getByLabel('Enter Current Read:');
+    this.estimatedElectricUseInput = page.getByLabel('Estimated Electric use (kWh):');
+    this.estimatedGasUseInput = page.getByLabel('Estimated Gas use (Ccf):');
+    this.electricOnlyRadio = page.locator('#e');
+    this.electricAndGasRadio = page.locator('#eg');
+    this.calculateButton = page.locator('#validateMoveInBtn');
+    this.resetButton = page.locator('#rateCalCancelBtn');
+    this.howToReadYourBillButton = page.locator('#howToReadYourBillBtn');
+    this.howToFindUsageButton = page.locator('#howToFindUsageBtn');
+  }
+
+  /**
+   * Navigates to the rate calculator page.
+   * @param url The URL of the page.
+   */
+  async navigateTo(url: string): Promise<void> {
+    await this.page.goto(url);
+  }
+
+  /**
+   * Selects a month from the month dropdown.
+   * @param monthValue The value of the month to select (e.g., 'm06' for June).
+   */
+  async selectMonth(monthValue: string): Promise<void> {
+    await this.monthDropdown.selectOption(monthValue);
+  }
+
+  /**
+   * Enters the previous meter reading.
+   * @param readValue The previous meter read value.
+   */
+  async enterPreviousRead(readValue: string): Promise<void> {
+    await this.previousReadInput.fill(readValue);
+  }
+
+  /**
+   * Enters the current meter reading.
+   * @param readValue The current meter read value.
+   */
+  async enterCurrentRead(readValue: string): Promise<void> {
+    await this.currentReadInput.fill(readValue);
+  }
+
+  /**
+   * Selects the 'Electric Only' service type radio button.
+   */
+  async selectElectricOnlyService(): Promise<void> {
+    await this.electricOnlyRadio.check();
+  }
+
+  /**
+   * Selects the 'Electric and Gas' service type radio button.
+   */
+  async selectElectricAndGasService(): Promise<void> {
+    await this.electricAndGasRadio.check();
+  }
+
+  /**
+   * Clicks the 'Calculate' button.
+   */
+  async clickCalculate(): Promise<void> {
+    await this.calculateButton.click();
+  }
+
+  /**
+   * Clicks the 'Reset' button.
+   */
+  async clickReset(): Promise<void> {
+    await this.resetButton.click();
+  }
+
+  /**
+   * Gets the estimated electric use value.
+   * @returns The string value of the estimated electric use.
+   */
+  async getEstimatedElectricUse(): Promise<string> {
+    return await this.estimatedElectricUseInput.inputValue();
+  }
+
+  /**
+   * Gets the estimated gas use value.
+   * Note: This field may be disabled depending on service type selection.
+   * @returns The string value of the estimated gas use.
+   */
+  async getEstimatedGasUse(): Promise<string> {
+    return await this.estimatedGasUseInput.inputValue();
+  }
+
+  /**
+   * Checks if the estimated gas use input is disabled.
+   * @returns A boolean indicating if the input is disabled.
+   */
+  async isEstimatedGasUseDisabled(): Promise<boolean> {
+      return await this.estimatedGasUseInput.isDisabled();
+  }
+}
