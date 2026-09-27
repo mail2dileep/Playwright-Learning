@@ -1,1 +1,108 @@
-import { Page, Locator } from '@playwright/test';\n\nexport class RateCalculatorPage {\n  private readonly page: Page;\n\n  // Locators\n  private readonly monthDropdown: Locator;\n  private readonly previousReadInput: Locator;\n  private readonly currentReadInput: Locator;\n  private readonly estimatedElectricUseInput: Locator;\n  private readonly estimatedGasUseInput: Locator;\n  private readonly electricServiceRadio: Locator;\n  private readonly electricGasServiceRadio: Locator;\n  private readonly howToReadYourBillButton: Locator;\n  private readonly howToFindUsageButton: Locator;\n  private readonly resetButton: Locator;\n  private readonly calculateButton: Locator;\n\n  constructor(page: Page) {\n    this.page = page;\n    this.monthDropdown = page.getByLabel('Month');\n    this.previousReadInput = page.getByLabel('Enter Previous Read:');\n    this.currentReadInput = page.getByLabel('Enter Current Read:');\n    this.estimatedElectricUseInput = page.getByLabel('Estimated Electric use (kWh):');\n    this.estimatedGasUseInput = page.getByLabel('Estimated Gas use (Ccf):');\n    this.electricServiceRadio = page.locator('#e'); // Using ID as per recommendedLocator\n    this.electricGasServiceRadio = page.locator('#eg'); // Using ID as per recommendedLocator\n    this.howToReadYourBillButton = page.locator('#howToReadYourBillBtn');\n    this.howToFindUsageButton = page.locator('#howToFindUsageBtn');\n    this.resetButton = page.locator('#rateCalCancelBtn');\n    this.calculateButton = page.locator('#validateMoveInBtn');\n  }\n\n  // Actions\n  async selectMonth(monthValue: string): Promise<void> {\n    await this.monthDropdown.selectOption(monthValue);\n  }\n\n  async enterPreviousRead(readValue: string): Promise<void> {\n    await this.previousReadInput.fill(readValue);\n  }\n\n  async enterCurrentRead(readValue: string): Promise<void> {\n    await this.currentReadInput.fill(readValue);\n  }\n\n  async selectElectricService(): Promise<void> {\n    await this.electricServiceRadio.check();\n  }\n\n  async selectElectricGasService(): Promise<void> {\n    await this.electricGasServiceRadio.check();\n  }\n\n  async clickHowToReadYourBill(): Promise<void> {\n    await this.howToReadYourBillButton.click();\n  }\n\n  async clickHowToFindUsage(): Promise<void> {\n    await this.howToFindUsageButton.click();\n  }\n\n  async clickReset(): Promise<void> {\n    await this.resetButton.click();\n  }\n\n  async clickCalculate(): Promise<void> {\n    await this.calculateButton.click();\n  }\n\n  // Getters for assertions (return Locators, assertions remain in spec)\n  getEstimatedElectricUseLocator(): Locator {\n    return this.estimatedElectricUseInput;\n  }\n\n  getEstimatedGasUseLocator(): Locator {\n    return this.estimatedGasUseInput;\n  }\n\n  getMonthDropdownLocator(): Locator {\n    return this.monthDropdown;\n  }\n\n  getPreviousReadInputLocator(): Locator {\n    return this.previousReadInput;\n  }\n\n  getCurrentReadInputLocator(): Locator {\n    return this.currentReadInput;\n  }\n\n  getElectricServiceRadioLocator(): Locator {\n    return this.electricServiceRadio;\n  }\n\n  getElectricGasServiceRadioLocator(): Locator {\n    return this.electricGasServiceRadio;\n  }\n}
+import { Page, Locator } from '@playwright/test';
+
+export class RateCalculatorPage {
+  private readonly page: Page;
+
+  // Locators
+  private readonly monthDropdown: Locator;
+  private readonly previousMeterReadInput: Locator;
+  private readonly currentMeterReadInput: Locator;
+  private readonly estimatedElectricUsageInput: Locator;
+  private readonly estimatedGasUsageInput: Locator;
+  private readonly electricServiceRadioButton: Locator;
+  private readonly electricGasServiceRadioButton: Locator;
+  private readonly howToReadYourBillButton: Locator;
+  private readonly howToFindUsageButton: Locator;
+  private readonly resetButton: Locator;
+  private readonly calculateButton: Locator;
+
+  constructor(page: Page) {
+    this.page = page;
+    this.monthDropdown = page.getByLabel('Month');
+    this.previousMeterReadInput = page.getByLabel('Enter Previous Read:');
+    this.currentMeterReadInput = page.getByLabel('Enter Current Read:');
+    this.estimatedElectricUsageInput = page.getByLabel('Estimated Electric use (kWh):');
+    this.estimatedGasUsageInput = page.getByLabel('Estimated Gas use (Ccf):');
+    this.electricServiceRadioButton = page.locator('#e');
+    this.electricGasServiceRadioButton = page.locator('#eg');
+    this.howToReadYourBillButton = page.locator('#howToReadYourBillBtn');
+    this.howToFindUsageButton = page.locator('#howToFindUsageBtn');
+    this.resetButton = page.locator('#rateCalCancelBtn');
+    this.calculateButton = page.locator('#validateMoveInBtn');
+  }
+
+  // Actions
+  async selectBillingMonth(month: string): Promise<void> {
+    await this.monthDropdown.selectOption(month);
+  }
+
+  async enterPreviousMeterRead(read: string): Promise<void> {
+    await this.previousMeterReadInput.fill(read);
+  }
+
+  async enterCurrentMeterRead(read: string): Promise<void> {
+    await this.currentMeterReadInput.fill(read);
+  }
+
+  async selectElectricServiceType(): Promise<void> {
+    await this.electricServiceRadioButton.check();
+  }
+
+  async selectElectricGasServiceType(): Promise<void> {
+    await this.electricGasServiceRadioButton.check();
+  }
+
+  async clickCalculate(): Promise<void> {
+    await this.calculateButton.click();
+  }
+
+  async clickReset(): Promise<void> {
+    await this.resetButton.click();
+  }
+
+  async clickHowToReadYourBill(): Promise<void> {
+    await this.howToReadYourBillButton.click();
+  }
+
+  async clickHowToFindUsage(): Promise<void> {
+    await this.howToFindUsageButton.click();
+  }
+
+  // Getters for verification
+  async getEstimatedElectricUsage(): Promise<string> {
+    return await this.estimatedElectricUsageInput.inputValue();
+  }
+
+  async getEstimatedGasUsage(): Promise<string> {
+    return await this.estimatedGasUsageInput.inputValue();
+  }
+
+  async isGasUsageFieldDisabled(): Promise<boolean> {
+    return await this.estimatedGasUsageInput.isDisabled();
+  }
+
+  async getPreviousMeterRead(): Promise<string> {
+    return await this.previousMeterReadInput.inputValue();
+  }
+
+  async getCurrentMeterRead(): Promise<string> {
+    return await this.currentMeterReadInput.inputValue();
+  }
+
+  async getSelectedMonthValue(): Promise<string> {
+    return await this.monthDropdown.inputValue();
+  }
+
+  async isElectricServiceTypeSelected(): Promise<boolean> {
+    return await this.electricServiceRadioButton.isChecked();
+  }
+
+  // Workflow method
+  async calculateElectricUsage(month: string, previousRead: string, currentRead: string): Promise<void> {
+    await this.selectBillingMonth(month);
+    await this.enterPreviousMeterRead(previousRead);
+    await this.enterCurrentMeterRead(currentRead);
+    await this.selectElectricServiceType();
+    await this.clickCalculate();
+  }
+}
