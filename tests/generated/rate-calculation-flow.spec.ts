@@ -1,74 +1,87 @@
 import { test, expect } from '@playwright/test';
-import { RateCalculatorPage } from '../../pages/RateCalculatorPage'; // Relative path to the Page Object
+import { RateCalculatorPage } from '../../pages/RateCalculatorPage';
 
-test.describe('Rate Calculator Core Functionality', () => {
+test.describe('Rate Calculator Functionality', () => {
   let rateCalculatorPage: RateCalculatorPage;
-  // Define a placeholder base URL. In a real framework, this would typically come from a config file.
-  const baseURL = 'https://example.com/rate-calculator'; 
+
+  // Placeholder for actual application URL. In a real scenario, this would likely be configured
+  // in playwright.config.ts or passed via environment variables.
+  const TEST_URL = '/calculator';
 
   test.beforeEach(async ({ page }) => {
     rateCalculatorPage = new RateCalculatorPage(page);
-    await page.goto(baseURL);
-    // Ensure the page is fully loaded before attempting interactions
-    await page.waitForLoadState('domcontentloaded'); 
+    await rateCalculatorPage.navigate(TEST_URL);
+    // Ensure the page is loaded and main elements are visible before proceeding with tests
+    await expect(rateCalculatorPage.page.getByLabel('Month')).toBeVisible();
   });
 
-  test('should successfully calculate electric and gas usage with valid inputs', async () => {
-    // Step 1: Select a specific month from the dropdown
-    await rateCalculatorPage.selectMonth('m07'); // Select 'July' with value 'm07'
-    expect(await rateCalculatorPage.getMonthSelectedValue()).toBe('m07');
+  test('should successfully calculate electric bill for October', async () => {
+    const month = 'm10'; // Value for October from locator catalog
+    const previousRead = '1000';
+    const currentRead = '1500';
+    const expectedElectricUse = '500'; // Assuming a simple calculation for demonstration
 
-    // Step 2: Enter previous and current meter readings
-    const previousRead = '100';
-    const currentRead = '250';
+    test.info().annotations.push({ type: 'Test Objective', description: 'Verify electric bill calculation for a specific month and meter readings.' });
+
+    // Step 1: Select month
+    await rateCalculatorPage.selectMonth(month);
+    await expect(await rateCalculatorPage.getSelectedMonth()).toBe(month);
+
+    // Step 2: Enter Previous Read
     await rateCalculatorPage.enterPreviousRead(previousRead);
+    await expect(await rateCalculatorPage.getPreviousReadValue()).toBe(previousRead);
+
+    // Step 3: Enter Current Read
     await rateCalculatorPage.enterCurrentRead(currentRead);
+    await expect(await rateCalculatorPage.getCurrentReadValue()).toBe(currentRead);
 
-    // Step 3: Select 'Electric and Gas' service type.
-    // Assumption: Selecting 'Electric and Gas' enables the 'Estimated Gas use' field.
-    await rateCalculatorPage.selectElectricAndGasService();
-    expect(await rateCalculatorPage.isEstimatedGasUseFieldDisabled()).toBe(false);
+    // Step 4: Select Electric service type
+    await rateCalculatorPage.selectElectricService();
+    await expect(await rateCalculatorPage.isElectricServiceSelected()).toBe(true);
+    await expect(await rateCalculatorPage.isElectricGasServiceSelected()).toBe(false);
 
-    // Step 4: Click the 'Calculate' button to trigger computations
-    await rateCalculatorPage.clickCalculateButton();
+    // Verify Gas use input is disabled initially for Electric only service, as per catalog
+    await expect(await rateCalculatorPage.isGasUseInputDisabled()).toBe(true);
+    await expect(await rateCalculatorPage.getEstimatedGasUse()).toBe('0'); // Current value from catalog
 
-    // Expected Result 1: Verify the calculated estimated electric use.
-    // Assuming a simple calculation (Current Read - Previous Read).
-    const expectedElectricUse = String(parseInt(currentRead) - parseInt(previousRead));
-    expect(await rateCalculatorPage.getEstimatedElectricUse()).toBe(expectedElectricUse);
+    // Step 5: Click Calculate
+    await rateCalculatorPage.clickCalculate();
 
-    // Expected Result 2: Verify the estimated gas use.
-    // Assuming '0' if no specific gas consumption input, but the field is now enabled.
-    expect(await rateCalculatorPage.getEstimatedGasUse()).toBe('0');
+    // Step 6: Verify the estimated electric use
+    await expect(await rateCalculatorPage.getEstimatedElectricUse()).toBe(expectedElectricUse);
+
+    // Verify estimated gas use remains disabled and '0'
+    await expect(await rateCalculatorPage.isGasUseInputDisabled()).toBe(true);
+    await expect(await rateCalculatorPage.getEstimatedGasUse()).toBe('0');
   });
 
-  test('should reset all form fields to their initial default states', async () => {
-    // Arrange: Populate form fields with non-default values to demonstrate reset functionality
-    await rateCalculatorPage.selectMonth('m12'); // Select 'December'
-    await rateCalculatorPage.enterPreviousRead('50');
-    await rateCalculatorPage.enterCurrentRead('150');
-    await rateCalculatorPage.selectElectricService(); // Select Electric service
-    await rateCalculatorPage.clickCalculateButton();
+  test('should reset form fields when reset button is clicked', async () => {
+    test.info().annotations.push({ type: 'Test Objective', description: 'Verify all input fields and selections are reset to default values upon clicking the Reset button.' });
 
-    // Assert: Verify fields are populated as expected before the reset action
-    expect(await rateCalculatorPage.getMonthSelectedValue()).toBe('m12');
-    expect(await rateCalculatorPage.getEstimatedElectricUse()).toBe('100'); // 150 - 50 = 100
-    expect(await rateCalculatorPage.getEstimatedGasUse()).toBe('0'); 
-    expect(await rateCalculatorPage.isEstimatedGasUseFieldDisabled()).toBe(true); // Gas field should remain disabled if only electric service is selected
+    // Fill some fields first
+    await rateCalculatorPage.selectMonth('m11');
+    await rateCalculatorPage.enterPreviousRead('200');
+    await rateCalculatorPage.enterCurrentRead('300');
+    await rateCalculatorPage.selectElectricGasService();
 
-    // Step 1: Click the 'Reset' button
-    await rateCalculatorPage.clickResetButton();
+    // Verify fields are filled with the entered values
+    await expect(await rateCalculatorPage.getSelectedMonth()).toBe('m11');
+    await expect(await rateCalculatorPage.getPreviousReadValue()).toBe('200');
+    await expect(await rateCalculatorPage.getCurrentReadValue()).toBe('300');
+    await expect(await rateCalculatorPage.isElectricGasServiceSelected()).toBe(true);
 
-    // Expected Result 1: Verify the month dropdown reverts to its initial default value ('m06' for June).
-    expect(await rateCalculatorPage.getMonthSelectedValue()).toBe('m06');
-    
-    // Expected Result 2: Verify the estimated electric use reverts to its default initial value ('0').
-    expect(await rateCalculatorPage.getEstimatedElectricUse()).toBe('0');
+    // Click reset
+    await rateCalculatorPage.clickReset();
 
-    // Expected Result 3: Verify the estimated gas use reverts to its default initial value ('0') and becomes disabled.
-    expect(await rateCalculatorPage.getEstimatedGasUse()).toBe('0');
-    expect(await rateCalculatorPage.isEstimatedGasUseFieldDisabled()).toBe(true); 
-    
-    // Additional checks for radio buttons could be added if their default selection state needs verification.
+    // Verify fields are reset to initial default values as per locator catalog
+    // Month defaults to 'm06' from catalog
+    await expect(await rateCalculatorPage.getSelectedMonth()).toBe('m06');
+    // Input fields default to '0' from catalog
+    await expect(await rateCalculatorPage.getPreviousReadValue()).toBe('0');
+    await expect(await rateCalculatorPage.getCurrentReadValue()).toBe('0');
+    // Assuming 'Electric' ('e') is the default radio button selection after reset, 
+    // as 'E' has a current value and 'EG' also does, but a reset typically goes to the first default or 'E'.
+    await expect(await rateCalculatorPage.isElectricServiceSelected()).toBe(true);
+    await expect(await rateCalculatorPage.isElectricGasServiceSelected()).toBe(false);
   });
 });
